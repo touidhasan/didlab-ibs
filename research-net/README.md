@@ -15,7 +15,7 @@ RPC bound to localhost only.
 | Gas limit | 4.7 M | 60 M | Matches the Hardhat testbed for the sim-vs-real comparison |
 | Block reward | 1 TRUST to a fixed beneficiary | none | Not needed for experiments |
 | Prague system contracts | n/a | Pre-loaded in genesis (EIP-4788, 2935, 7002, 7251; code from go-ethereum) | Mirror mainnet state |
-| Funded accounts | — | The 10 testbed accounts (`sigsim:*`) | Keys are derived from public labels — **never expose this RPC** |
+| Funded accounts | — | The 10 testbed accounts (`sigsim:*`) and a faucet (`sigsim:faucet`, 10^12 units) that funds fresh actors for every simulator run | Keys are derived from public labels — **never expose this RPC** |
 
 ## Where to run
 
@@ -41,6 +41,14 @@ production block times. If it must share the host, the containers use their own 
 6. **Smoke test** (Node 20+): `npm install && npm run smoke` — expect `ALL CHECKS PASSED`.
    It verifies the forks, block period, system contracts, a Prague-compiled deploy, and a full
    EIP-7702 delegate → sweep-through-delegate → revoke cycle.
+
+7. **Run the simulator on Besu:**
+   ```bash
+   cd ../testbed && npm ci
+   BACKEND=rpc RPC=http://127.0.0.1:18545 node sim.mjs =R4-A1
+   ```
+   Each run deploys its own contracts and accounts, so runs never interfere. A full-horizon run
+   takes about 45 minutes at 2 s blocks; use `tmux` or `nohup` for campaigns.
 
 ## If something fails
 

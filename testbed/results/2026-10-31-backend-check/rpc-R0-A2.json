@@ -1,0 +1,71 @@
+{
+  "meta": {
+    "backend": "rpc",
+    "chainId": 31338,
+    "horizon": 230,
+    "seeds": [
+      7
+    ],
+    "started": "2026-10-31T20:26:41.888Z",
+    "client": "HardhatNetwork/2.29.1/@nomicfoundation/edr/0.3.8",
+    "rpc": "http://127.0.0.1:8599"
+  },
+  "results": [
+    {
+      "name": "R0-A2",
+      "config": "R0 Baseline (sign on request, manual response)",
+      "attacker": "A2 Blitz (atomic delegation+sweep, drains signed and sent in one block)",
+      "lossUsd": 3036543118,
+      "loss": {
+        "ETH": 196871,
+        "USDT": 1760739555,
+        "USDC": 823000000
+      },
+      "detectT": null,
+      "containT": null,
+      "containments": 0,
+      "lossAtFirstContainUsd": null,
+      "delegatedBlocks": 231,
+      "alertsDuringAttack": 0,
+      "falseAlerts": 0,
+      "firstAlert": null,
+      "benign": {
+        "requested": 316,
+        "completed": 316,
+        "escalated": 0,
+        "blocked": 0,
+        "paused": 0
+      },
+      "signerDenials": {},
+      "log": [
+        [
+          -16,
+          "attacker: obtained 50 authorizations for nonces 41..90"
+        ],
+        [
+          0,
+          "Binance 14 nonce 56 -> 91: 35 authorizations applied"
+        ],
+        [
+          0,
+          "attacker: delegation tx submitted with atomic sweep + pre-signed drains"
+        ]
+      ],
+      "alerts": [],
+      "timing": {
+        "t0Block": 881,
+        "detectBlocksAfterT0": null,
+        "detectSecAfterT0": null,
+        "containBlocksAfterT0": null,
+        "containSecAfterT0": null,
+        "steps": {
+          "steps": 291,
+          "overruns": 0,
+          "maxBlocksPerStep": 1
+        }
+      },
+      "seed": 7,
+      "runtimeSec": 147
+    }
+  ]
+}

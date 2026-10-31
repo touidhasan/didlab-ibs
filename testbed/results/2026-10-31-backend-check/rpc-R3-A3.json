@@ -1,0 +1,108 @@
+{
+  "meta": {
+    "backend": "rpc",
+    "chainId": 31338,
+    "horizon": 230,
+    "seeds": [
+      7
+    ],
+    "started": "2026-10-31T20:29:43.361Z",
+    "client": "HardhatNetwork/2.29.1/@nomicfoundation/edr/0.3.8",
+    "rpc": "http://127.0.0.1:8599"
+  },
+  "results": [
+    {
+      "name": "R3-A3",
+      "config": "R3 Semantic policy + containment (C2+C3+C4)",
+      "attacker": "A3 Policy-aware (no EIP-7702; max-size plain transfers every block)",
+      "lossUsd": 23975200,
+      "loss": {
+        "ETH": 10424,
+        "USDT": 0,
+        "USDC": 0
+      },
+      "detectT": 0,
+      "containT": 0,
+      "containments": 1,
+      "lossAtFirstContainUsd": 23975200,
+      "delegatedBlocks": 0,
+      "alertsDuringAttack": 32,
+      "falseAlerts": 0,
+      "firstAlert": "signer:velocity",
+      "benign": {
+        "requested": 316,
+        "completed": 64,
+        "escalated": 0,
+        "blocked": 252,
+        "paused": 0
+      },
+      "signerDenials": {
+        "attacker:velocity": 5,
+        "pipeline:frozen": 252,
+        "attacker:frozen": 1150
+      },
+      "log": [
+        [
+          0,
+          "containment: signer frozen, replenishment halted"
+        ]
+      ],
+      "alerts": [
+        {
+          "t": 0,
+          "kind": "signer:velocity",
+          "who": "attacker"
+        },
+        {
+          "t": 0,
+          "kind": "signer:velocity",
+          "who": "attacker"
+        },
+        {
+          "t": 0,
+          "kind": "signer:velocity",
+          "who": "attacker"
+        },
+        {
+          "t": 0,
+          "kind": "signer:velocity",
+          "who": "attacker"
+        },
+        {
+          "t": 0,
+          "kind": "signer:velocity",
+          "who": "attacker"
+        },
+        {
+          "t": 0,
+          "kind": "watch:unexplained-native-tx",
+          "who": "chain"
+        },
+        {
+          "t": 0,
+          "kind": "watch:unexplained-native-tx",
+          "who": "chain"
+        },
+        {
+          "t": 0,
+          "kind": "watch:unexplained-native-tx",
+          "who": "chain"
+        }
+      ],
+      "timing": {
+        "t0Block": 1243,
+        "detectBlocksAfterT0": 0,
+        "detectSecAfterT0": 0.249,
+        "containBlocksAfterT0": 1,
+        "containSecAfterT0": 0.54,
+        "steps": {
+          "steps": 291,
+          "overruns": 0,
+          "maxBlocksPerStep": 1
+        }
+      },
+      "seed": 7,
+      "runtimeSec": 147
+    }
+  ]
+}

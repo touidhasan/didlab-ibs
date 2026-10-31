@@ -96,6 +96,10 @@
       "c598674a546ee2978b234ec1ab99939aa74e819c": {
         "comment": "testbed account sigsim:intent-authority (key = keccak256('sigsim:intent-authority'), public test key)",
         "balance": "0xd3c21bcecceda1000000"
+      },
+      "fa2f208e78283a2ab105d4c05f081ac0e025c7e8": {
+        "comment": "testbed faucet sigsim:faucet (key = keccak256('sigsim:faucet'), public test key); funds fresh actors for every BACKEND=rpc run",
+        "balance": "0xc9f2c9cd04674edea40000000"
       }
     }
   },

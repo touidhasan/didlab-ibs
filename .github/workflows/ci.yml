@@ -14,6 +14,12 @@ jobs:
       - name: Quick simulation (R4 vs incident replay)
         working-directory: testbed
         run: npm run sim:quick
+      - name: rpc backend against an interval-mined local node
+        working-directory: testbed
+        run: |
+          (MINING_INTERVAL=250 npx hardhat --config hardhat.rpc-test.config.js node --port 8598 > /tmp/hhrpc.log 2>&1 &)
+          for i in $(seq 1 30); do curl -s -o /dev/null http://127.0.0.1:8598 && break; sleep 1; done
+          BACKEND=rpc RPC=http://127.0.0.1:8598 HORIZON=40 node sim.mjs =R4-A1
       - name: Install research-net smoke test
         working-directory: research-net
         run: npm ci

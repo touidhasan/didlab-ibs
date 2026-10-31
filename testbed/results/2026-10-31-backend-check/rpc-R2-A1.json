@@ -1,0 +1,88 @@
+{
+  "meta": {
+    "backend": "rpc",
+    "chainId": 31338,
+    "horizon": 230,
+    "seeds": [
+      7
+    ],
+    "started": "2026-10-31T20:24:05.217Z",
+    "client": "HardhatNetwork/2.29.1/@nomicfoundation/edr/0.3.8",
+    "rpc": "http://127.0.0.1:8599"
+  },
+  "results": [
+    {
+      "name": "R2-A1",
+      "config": "R2 Autonomous containment only (C4)",
+      "attacker": "A1 Binance-paced replay (incident schedule)",
+      "lossUsd": 0,
+      "loss": {
+        "ETH": 0,
+        "USDT": 0,
+        "USDC": 0
+      },
+      "detectT": 0,
+      "containT": 0,
+      "containments": 1,
+      "lossAtFirstContainUsd": 0,
+      "delegatedBlocks": 1,
+      "alertsDuringAttack": 1,
+      "falseAlerts": 0,
+      "firstAlert": "watch:code-at-treasury-eoa",
+      "benign": {
+        "requested": 316,
+        "completed": 64,
+        "escalated": 0,
+        "blocked": 252,
+        "paused": 0
+      },
+      "signerDenials": {
+        "pipeline:frozen": 252,
+        "attacker:frozen": 6
+      },
+      "log": [
+        [
+          -16,
+          "attacker: obtained 50 authorizations for nonces 41..90"
+        ],
+        [
+          0,
+          "Binance 14 nonce 56 -> 91: 35 authorizations applied"
+        ],
+        [
+          0,
+          "attacker: delegation tx submitted"
+        ],
+        [
+          0,
+          "containment: signer frozen, replenishment halted"
+        ],
+        [
+          0,
+          "revocation submitted for 0x26e8cC (auto)"
+        ]
+      ],
+      "alerts": [
+        {
+          "t": 0,
+          "kind": "watch:code-at-treasury-eoa",
+          "who": "chain"
+        }
+      ],
+      "timing": {
+        "t0Block": 568,
+        "detectBlocksAfterT0": 1,
+        "detectSecAfterT0": 0.554,
+        "containBlocksAfterT0": 1,
+        "containSecAfterT0": 0.566,
+        "steps": {
+          "steps": 291,
+          "overruns": 0,
+          "maxBlocksPerStep": 1
+        }
+      },
+      "seed": 7,
+      "runtimeSec": 147
+    }
+  ]
+}

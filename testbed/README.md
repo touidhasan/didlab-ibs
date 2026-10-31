@@ -1,8 +1,8 @@
 # Signing-path compromise testbed (prototype)
 
-Local-devnet simulation of the Oct 29, 2026 Binance hot-wallet attack and of
-Intent-Bound Signing (IBS) defenses. Built Oct 30, 2026 as preliminary evidence
-for the research proposal. Runs only against an in-process Hardhat devnet.
+Simulation of the Oct 29, 2026 Binance hot-wallet attack and of Intent-Bound Signing (IBS)
+defenses. Runs in-process on Hardhat EDR (default) or against any JSON-RPC chain, such as the
+Besu research network in [`../research-net`](../research-net).
 
 ## Requirements
 
@@ -21,11 +21,34 @@ node sim.mjs =R4t-A3      # exactly one run
 HORIZON=300 node sim.mjs =R0-A1   # shorter horizon (steps after t0)
 ```
 
-Results go to `results*.json` in this folder (git-ignored). The curated Oct 30 runs are in `results/2026-10-30/`.
+Multiple seeds: `SEEDS=7,8,9,10,11 node sim.mjs R4` (default seed 7 reproduces the Oct 30 runs).
+
+Results go to `results*.json` in this folder (git-ignored), as `{ meta, results }`.
+Curated runs live in `results/<date>/` (the Oct 30 files predate `meta` and are a plain array).
+
+## Backends
+
+| | `BACKEND=hardhat` (default) | `BACKEND=rpc RPC=<url>` |
+|---|---|---|
+| Chain | in-process Hardhat EDR, Prague | any JSON-RPC node (Besu research network: `http://127.0.0.1:18545`) |
+| One step | one manually mined block; every tx mined on send | one real block (2 s on the research network) |
+| Between runs | snapshot / revert | fresh actor keys `sigsim:<runTag>:<label>`, funded from the faucet `FAUCET_KEY` (default `keccak256("sigsim:faucet")`) |
+| Extra output | — | `timing`: detection/containment in blocks and seconds after t0; step overruns |
+
+```
+BACKEND=rpc RPC=http://127.0.0.1:18545 node sim.mjs =R4-A1     # one run on Besu (~45 min at 2 s blocks)
+```
+
+To test the rpc path without Besu, use a local interval-mined node:
+
+```
+MINING_INTERVAL=500 npx hardhat --config hardhat.rpc-test.config.js node --port 8599
+BACKEND=rpc RPC=http://127.0.0.1:8599 HORIZON=230 node sim.mjs =R2-A1
+```
 
 ## Model
 
-- One step = 12 s. t0 = the EIP-7702 delegation (20:20:59 UTC in the incident).
+- One step = one block (12 s in the incident timeline). t0 = the EIP-7702 delegation (20:20:59 UTC in the incident).
   60 warm-up steps, 1,200 attack steps.
 - Wallets are funded to the incident's Ethereum-leg balances.
 - Manual response from the incident applies to every configuration:

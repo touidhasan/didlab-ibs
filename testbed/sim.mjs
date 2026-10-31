@@ -1,19 +1,39 @@
-// Signing-path compromise testbed (local Prague devnet, Hardhat EDR).
+// Signing-path compromise testbed (Prague EVM).
 // Reproduces the Oct 29, 2026 Binance pattern and measures defenses.
-// Time unit: 1 block = 12 s. t0 = block of the EIP-7702 delegation (20:20:59 UTC in the incident).
-import hre from "hardhat";
+// Time unit: 1 step = 1 block (12 s in the incident timeline). t0 = the EIP-7702 delegation (20:20:59 UTC).
+//
+// Backends:
+//   BACKEND=hardhat (default)  in-process Hardhat EDR: automine, setBalance, snapshot/revert between runs
+//   BACKEND=rpc  RPC=<url>     any JSON-RPC chain (Besu research network): real blocks, fresh accounts per run
+//                              funded from FAUCET_KEY (default keccak256("sigsim:faucet")), 1 step = 1 real block
 import solc from "solc";
 import fs from "fs";
 import {
-  createPublicClient, createWalletClient, createTestClient, custom, encodeFunctionData,
+  createPublicClient, createWalletClient, createTestClient, custom, http, defineChain, encodeFunctionData,
   decodeFunctionData, keccak256, toHex, encodeAbiParameters, zeroAddress, parseEther, getAddress,
   recoverMessageAddress,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { hardhat } from "viem/chains";
 
+// ---------- backend ----------
+const BACKEND = process.env.BACKEND || "hardhat";
+if (!["hardhat", "rpc"].includes(BACKEND)) { console.error(`BACKEND must be hardhat or rpc, got ${BACKEND}`); process.exit(2); }
+const RPC = process.env.RPC || "http://127.0.0.1:18545";
+let transport, chain, test = null;
+if (BACKEND === "hardhat") {
+  const hre = (await import("hardhat")).default;
+  transport = custom(hre.network.provider);
+  chain = hardhat;
+} else {
+  transport = http(RPC, { timeout: 30_000 });
+  const id = await createPublicClient({ transport }).getChainId();
+  chain = defineChain({ id, name: `rpc-${id}`, nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 }, rpcUrls: { default: { http: [RPC] } } });
+}
+const CHAIN_ID = chain.id;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
 // ---------- constants ----------
-const CHAIN_ID = 31337;
 const ETH_USD = 2300n;            // price used to report losses
 const E18 = 10n ** 18n;
 const usdOf = (asset, amt) => asset === "ETH" ? Number(amt * ETH_USD / E18) : Number(amt / E18);
@@ -34,17 +54,36 @@ const art = n => ({ abi: out.contracts["c.sol"][n].abi, bytecode: "0x" + out.con
 const STABLE = art("MockStable"), SAFE = art("OperatorSafe"), SWEEPER = art("Sweeper");
 
 // ---------- clients ----------
-const transport = custom(hre.network.provider);
-const pub = createPublicClient({ chain: hardhat, transport, cacheTime: 0 });
-const test = createTestClient({ chain: hardhat, transport, mode: "hardhat" });
-const acct = label => privateKeyToAccount(keccak256(toHex("sigsim:" + label)));
-const wallet = a => createWalletClient({ chain: hardhat, transport, account: a });
+const pub = createPublicClient({ chain, transport, cacheTime: 0, pollingInterval: 250 });
+if (BACKEND === "hardhat") test = createTestClient({ chain, transport, mode: "hardhat" });
+const wallet = a => createWalletClient({ chain, transport, account: a });
 
-const K = {
-  deployer: acct("deployer"), hot14: acct("hot14"), hot16: acct("hot16"), hotB: acct("hotB"),
-  cold: acct("cold"), deposits: acct("deposits"), op: acct("attacker-operator"), hub: acct("attacker-hub"),
-  watcher: acct("watcher-gas"), ia: acct("intent-authority"),
-};
+// Actors. Hardhat keeps the fixed "sigsim:<label>" keys (reproduces earlier results);
+// rpc derives fresh keys per run ("sigsim:<runTag>:<label>") because a real chain cannot be rolled back.
+const LABELS = { deployer: "deployer", hot14: "hot14", hot16: "hot16", hotB: "hotB", cold: "cold", deposits: "deposits",
+  op: "attacker-operator", hub: "attacker-hub", watcher: "watcher-gas", ia: "intent-authority" };
+const keys = prefix => Object.fromEntries(Object.entries(LABELS).map(([k, l]) => [k, privateKeyToAccount(keccak256(toHex(prefix + l)))]));
+let K = keys("sigsim:");
+
+// Nonce tracking: on a real chain several transactions from one account are in flight within a block,
+// so the next nonce is the larger of the node's pending count and what this process has already sent.
+const nextNonce = new Map();
+async function pending(a) {
+  a = getAddress(a);
+  const c = await pub.getTransactionCount({ address: a, blockTag: "pending" });
+  const l = nextNonce.get(a) ?? 0;
+  return c > l ? c : l;
+}
+const noteNonce = (a, n) => { a = getAddress(a); if (n + 1 > (nextNonce.get(a) ?? 0)) nextNonce.set(a, n + 1); };
+let lastTxError = null;
+// Send from one of our accounts with a tracked nonce. wait=true blocks until mined (rpc only; Hardhat automines).
+async function txFrom(acc, params, { wait = false } = {}) {
+  const nonce = await pending(acc.address);
+  const h = await wallet(acc).sendTransaction({ ...FEES, ...params, nonce }).catch(e => { lastTxError = e; return null; });
+  if (h) noteNonce(acc.address, nonce);
+  if (h && wait && BACKEND === "rpc") await pub.waitForTransactionReceipt({ hash: h }).catch(() => null);
+  return h;
+}
 const FEES = { maxFeePerGas: 10n ** 10n, maxPriorityFeePerGas: 0n };
 
 // ---------- deterministic RNG ----------
@@ -76,6 +115,48 @@ async function setup() {
   W = { usdt, usdc, safe34, sweeper };
   // Automine stays on: each tx is validated and mined as sent; a 12 s step can contain several blocks.
   return await test.snapshot();
+}
+
+// rpc: fresh actors for one run, funded from the faucet, contracts deployed and balances minted.
+async function setupRpc(tag) {
+  K = keys(`sigsim:${tag}:`); nextNonce.clear();
+  const faucet = privateKeyToAccount(process.env.FAUCET_KEY || keccak256(toHex("sigsim:faucet")));
+  const fb = await pub.getBalance({ address: faucet.address });
+  if (fb < 2_000_000n * E18) throw new Error(`faucet ${faucet.address} has ${fb / E18} ETH; needs > 2,000,000`);
+  const target = { hot14: 167_464n, hot16: 28_005n, cold: 1_000_000n, deposits: 100_000n };
+  let last;
+  for (const [k, a] of Object.entries(K)) last = await txFrom(faucet, { to: a.address, value: (target[k] ?? 10n) * E18, gas: 21_000n });
+  await pub.waitForTransactionReceipt({ hash: last });
+  const dep = wallet(K.deployer);
+  const deploy = async (w, c, args) => getAddress((await pub.waitForTransactionReceipt({ hash: await w.deployContract({ ...c, args, ...FEES }) })).contractAddress.toLowerCase());
+  const usdt = await deploy(dep, STABLE, ["USDT"]);
+  const usdc = await deploy(dep, STABLE, ["USDC"]);
+  const safe34 = await deploy(dep, SAFE, [K.hot14.address]);
+  const sweeper = await deploy(wallet(K.op), SWEEPER, [K.op.address]);
+  const mintData = (to, amt) => encodeFunctionData({ abi: STABLE.abi, functionName: "mint", args: [to, amt] });
+  const mints = [[usdt, K.hot14.address, 1_615_000_000n], [usdt, K.hot16.address, 108_000_000n], [usdt, K.hotB.address, 38_000_000n],
+    [usdc, safe34, 823_000_000n], [usdt, K.cold.address, 10_000_000_000n]];
+  for (const [tok, to, units] of mints) last = await txFrom(K.deployer, { to: tok, data: mintData(to, units * E18), gas: 120_000n });
+  const rc = await pub.waitForTransactionReceipt({ hash: last });
+  if (rc.status !== "success") throw new Error("setup mint failed");
+  W = { usdt, usdc, safe34, sweeper };
+}
+
+// One step = one block. Hardhat mines an empty block; rpc waits for the chain's next block.
+let stepBlock = 0n;
+const stepStats = { steps: 0, overruns: 0, maxBlocksPerStep: 0 };
+async function closeStep() {
+  if (BACKEND === "hardhat") { await test.mine({ blocks: 1 }); return; }
+  let bn;
+  while ((bn = await pub.getBlockNumber()) <= stepBlock) await sleep(100);
+  const adv = Number(bn - stepBlock);
+  stepStats.steps++; if (adv > 1) stepStats.overruns++; if (adv > stepStats.maxBlocksPerStep) stepStats.maxBlocksPerStep = adv;
+  stepBlock = bn;
+}
+async function waitBlocks(n) {
+  if (BACKEND === "hardhat") { await test.mine({ blocks: n }); return; }
+  const target = (await pub.getBlockNumber()) + BigInt(n);
+  while ((await pub.getBlockNumber()) < target) await sleep(200);
 }
 
 // ---------- intent authority (separate trust domain: user-authenticated withdrawal ledger) ----------
@@ -133,8 +214,8 @@ class Signer {
     if (C.semantic) {
       d = this.decode(req);
       if (!d) return this.deny("undecodable", who);
-      const pending = await pub.getTransactionCount({ address: req.wallet, blockTag: "pending" });
-      if (req.nonce < pending || req.nonce >= pending + C.nonceWindow) return this.deny("nonce-window", who);
+      const next = await pending(req.wallet);
+      if (req.nonce < next || req.nonce >= next + C.nonceWindow) return this.deny("nonce-window", who);
       const usd = usdOf(d.asset, d.amount);
       if (usd > C.perTxUsd) return this.deny("escalate-manual", who);
       const now = ctx.block;
@@ -159,8 +240,11 @@ class Signer {
   }
 }
 
-const send = raw => pub.request({ method: "eth_sendRawTransaction", params: [raw] }).catch(() => null);
-const pending = a => pub.getTransactionCount({ address: a, blockTag: "pending" });
+const send = async (raw, from, nonce) => {
+  const h = await pub.request({ method: "eth_sendRawTransaction", params: [raw] }).catch(() => null);
+  if (h && from !== undefined) noteNonce(from, nonce);
+  return h;
+};
 const bal = async a => ({
   ETH: await pub.getBalance({ address: a }),
   USDT: await pub.readContract({ address: W.usdt, abi: STABLE.abi, functionName: "balanceOf", args: [a] }),
@@ -175,10 +259,12 @@ async function run({ name, cfg, attacker, seed = 7 }) {
   const ia = new IntentAuthority();
   const state = { alerts: [], detect: null, contain: null, contains: [], paused: false, replenishHalted: false, attackerCut: false, pendingContain: false, unfreezeAt: null, lossAtContain: null };
   let tNow = -WARMUP;
+  const clock = { t0Wall: null, t0Block: null };
+  const stamp = async () => ({ wall: Date.now(), block: await pub.getBlockNumber() });
   const alert = (kind, who) => {
     state.alerts.push({ t: tNow, kind, who });
     if (cfg.watcher) {
-      if (state.detect === null) state.detect = tNow;
+      if (state.detect === null) { state.detect = tNow; state.detectAt = { wall: Date.now(), block: stepBlock }; }
       // Tiered response: requests the signer already refused are not breaches; only real outflow anomalies,
       // velocity breaches or intent misuse freeze the signer.
       const soft = ["signer:no-intent", "signer:auth7702-requested"];
@@ -198,7 +284,7 @@ async function run({ name, cfg, attacker, seed = 7 }) {
 
   async function contain() {
     if (signer.frozen) return;
-    if (state.contain === null) { state.contain = tNow; state.lossAtContain = usdTotal(await bal(K.hub.address)) - usdTotal(hubStart); }
+    if (state.contain === null) { state.contain = tNow; state.containAt = await stamp(); state.lossAtContain = usdTotal(await bal(K.hub.address)) - usdTotal(hubStart); }
     state.contains.push(tNow); signer.frozen = true; state.replenishHalted = true;
     if (cfg.recover) state.unfreezeAt = tNow + cfg.recover;
     log.push([tNow, "containment: signer frozen, replenishment halted"]);
@@ -210,7 +296,7 @@ async function run({ name, cfg, attacker, seed = 7 }) {
   async function revoke(a, why) {
     const n = await pending(a);
     const res = await signer.request({ kind: "auth7702", wallet: a, delegate: zeroAddress, nonce: n }, { role: "breakglass", who: "watcher" });
-    const h = await wallet(K.watcher).sendTransaction({ to: K.watcher.address, value: 0n, authorizationList: [res.auth], gas: 100_000n, ...FEES }).catch(e => null);
+    await txFrom(K.watcher, { to: K.watcher.address, value: 0n, authorizationList: [res.auth], gas: 100_000n });
     log.push([tNow, `revocation submitted for ${a.slice(0, 8)} (${why})`]);
   }
 
@@ -227,14 +313,13 @@ async function run({ name, cfg, attacker, seed = 7 }) {
     const req = asset === "ETH" ? { kind: "tx", wallet: w, to, value: amount, data: "0x", nonce, gas: 50_000n, intent }
       : { kind: "tx", wallet: w, to: W.usdt, value: 0n, data: encodeFunctionData({ abi: TRANSFER_ABI, functionName: "transfer", args: [to, amount] }), nonce, gas: 100_000n, intent };
     const res = await signer.request(req, { role: "service", who: "pipeline", block: tNow });
-    if (res.ok) { await send(res.raw); benign.completed++; }
+    if (res.ok) { await send(res.raw, w, nonce); benign.completed++; }
     else if (res.reason === "escalate-manual") benign.escalated++;
     else benign.blocked++;
   }
 
   // Attacker helpers (holds the compromised service credential).
   const ctxA = () => ({ role: "service", who: "attacker", block: tNow });
-  const opW = wallet(K.op);
   const sweepData = encodeFunctionData({ abi: SWEEPER.abi, functionName: "sweep", args: [K.hub.address, [W.usdt, W.usdc]] });
   async function plainDrain(w, capped) {
     // Request signed transfers of the wallet's balances to the hub (largest allowed first).
@@ -255,7 +340,7 @@ async function run({ name, cfg, attacker, seed = 7 }) {
           : { kind: "tx", wallet: w, to: W.usdt, value: 0n, data: encodeFunctionData({ abi: TRANSFER_ABI, functionName: "transfer", args: [K.hub.address, ask] }), nonce, gas: 100_000n, intent };
         const res = await signer.request(req, ctxA());
         if (!res.ok) break;
-        await send(res.raw); amt -= ask; atk.vectors.plain = (atk.vectors.plain || 0) + usdOf(asset, ask);
+        await send(res.raw, w, nonce); amt -= ask; atk.vectors.plain = (atk.vectors.plain || 0) + usdOf(asset, ask);
       }
     }
   }
@@ -266,15 +351,15 @@ async function run({ name, cfg, attacker, seed = 7 }) {
     const N = await pending(K.hot14.address); const auths = [];
     for (let i = 0; i < 5; i++) { const res = await signer.request({ kind: "auth7702", wallet: K.hot14.address, delegate: W.sweeper, nonce: N + i }, ctxA()); if (res.ok) auths.push(res.auth); else break; }
     if (!auths.length) return false;
-    await opW.sendTransaction({ to: K.op.address, data: "0x", authorizationList: auths, gas: 400_000n, ...FEES }).catch(() => null);
+    await txFrom(K.op, { to: K.op.address, data: "0x", authorizationList: auths, gas: 400_000n }, { wait: true });
     log.push([tNow, "attacker: re-delegated Binance 14"]);
     return await delegated();
   }
-  async function sweep() { if (await ensureDelegation()) { await opW.sendTransaction({ to: K.hot14.address, data: sweepData, gas: 400_000n, ...FEES }).catch(() => null); } }
+  async function sweep() { if (await ensureDelegation()) await txFrom(K.op, { to: K.hot14.address, data: sweepData, gas: 400_000n }); }
   async function pull(amount) {
     if (!(await ensureDelegation())) return;
     const data = encodeFunctionData({ abi: SWEEPER.abi, functionName: "pull", args: [W.safe34, W.usdc, K.hub.address, amount] });
-    await opW.sendTransaction({ to: K.hot14.address, data, gas: 200_000n, ...FEES }).catch(() => null);
+    await txFrom(K.op, { to: K.hot14.address, data, gas: 200_000n });
   }
 
   // Exchange automation (deposit sweeps and hot-wallet replenishment), scripted from the incident.
@@ -283,7 +368,9 @@ async function run({ name, cfg, attacker, seed = 7 }) {
   // Pre-signed blitz needs signatures collected before any outflow.
   let blitz = [];
 
+  stepBlock = await pub.getBlockNumber();
   for (tNow = -WARMUP; tNow <= HORIZON; tNow++) {
+    if (tNow === 0) Object.assign(clock, { t0Wall: Date.now(), t0Block: stepBlock });
     if (state.unfreezeAt === tNow && !state.attackerCut) { signer.frozen = false; state.replenishHalted = false; state.unfreezeAt = null; log.push([tNow, "recovery: signer unfrozen (attacker not yet evicted)"]); }
     if (tNow === MANUAL_REVOKE + 1) { signer.frozen = false; state.paused = false; state.replenishHalted = false; log.push([tNow, "eviction complete: operations resume"]); }
     // --- legitimate traffic
@@ -293,8 +380,8 @@ async function run({ name, cfg, attacker, seed = 7 }) {
     const inf = inflows[tNow];
     if (inf && !state.replenishHalted) {
       const [asset, units] = inf;
-      if (asset === "ETH") await wallet(K.deposits).sendTransaction({ to: K.hot14.address, value: units * E18, gas: 60_000n, ...FEES }).catch(() => null);
-      else await wallet(K.cold).writeContract({ address: W.usdt, abi: STABLE.abi, functionName: "transfer", args: [K.hot14.address, units * E18], gas: 100_000n, ...FEES }).catch(() => null);
+      if (asset === "ETH") await txFrom(K.deposits, { to: K.hot14.address, value: units * E18, gas: 60_000n });
+      else await txFrom(K.cold, { to: W.usdt, data: encodeFunctionData({ abi: TRANSFER_ABI, functionName: "transfer", args: [K.hot14.address, units * E18] }), gas: 100_000n });
     }
     // --- manual SOC response (incident timeline), applies to every configuration
     if (tNow === MANUAL_PAUSE) { state.paused = true; log.push([tNow, "manual: customer withdrawals paused"]); }
@@ -320,17 +407,20 @@ async function run({ name, cfg, attacker, seed = 7 }) {
           const b = await bal(w); let n = await pending(w);
           const asks = []; if (b.ETH > 2n * E18) asks.push({ to: K.hub.address, value: b.ETH - 2n * E18, data: "0x", gas: 50_000n });
           if (b.USDT > 0n) asks.push({ to: W.usdt, value: 0n, data: encodeFunctionData({ abi: TRANSFER_ABI, functionName: "transfer", args: [K.hub.address, b.USDT] }), gas: 100_000n });
-          for (const a of asks) { const res = await signer.request({ kind: "tx", wallet: w, nonce: n, ...a }, ctxA()); if (res.ok) { blitz.push(res.raw); n++; } }
+          for (const a of asks) { const res = await signer.request({ kind: "tx", wallet: w, nonce: n, ...a }, ctxA()); if (res.ok) { blitz.push([res.raw, w, n]); n++; } }
         }
       }
       if (atk.mode !== "adaptive") {
         if (tNow === 0 && atk.auths.length) {
           const atomic = attacker.kind === "blitz";
           const nBefore = await pending(K.hot14.address);
-          await opW.sendTransaction({ to: atomic ? K.hot14.address : K.op.address, data: atomic ? sweepData : "0x", authorizationList: atk.auths, gas: 3_500_000n, ...FEES }).catch(e => log.push([tNow, "delegation tx error " + e.shortMessage]));
-          const nAfter = await pending(K.hot14.address);
+          // Pre-signed drains go out in the same block as the delegation (rpc) or right after it (Hardhat automine).
+          if (BACKEND === "rpc") for (const [raw, w, n] of blitz) await send(raw, w, n);
+          const dh = await txFrom(K.op, { to: atomic ? K.hot14.address : K.op.address, data: atomic ? sweepData : "0x", authorizationList: atk.auths, gas: 3_500_000n }, { wait: true });
+          if (!dh) log.push([tNow, "delegation tx error " + (lastTxError?.shortMessage || "")]);
+          const nAfter = await pub.getTransactionCount({ address: K.hot14.address, blockTag: "latest" });
           log.push([tNow, `Binance 14 nonce ${nBefore} -> ${nAfter}: ${nAfter - nBefore} authorizations applied`]);
-          for (const raw of blitz) await send(raw);
+          if (BACKEND === "hardhat") for (const [raw, w, n] of blitz) await send(raw, w, n);
           log.push([tNow, `attacker: delegation tx submitted${atomic ? " with atomic sweep + pre-signed drains" : ""}`]);
         }
         if ([17, 217, 416, 691, 1076].includes(tNow)) await sweep();
@@ -344,8 +434,8 @@ async function run({ name, cfg, attacker, seed = 7 }) {
       }
     }
 
-    // --- close the 12 s step (one empty block marks the passage of time)
-    await test.mine({ blocks: 1 });
+    // --- close the step (one block marks the passage of time)
+    await closeStep();
     const bn = await pub.getBlockNumber();
 
     // --- independent watcher (C4): tripwires + reconciliation against the intent ledger
@@ -387,7 +477,7 @@ async function run({ name, cfg, attacker, seed = 7 }) {
       for (const a of treasury) prevBal[a] = (await bal(a)).ETH;
     }
   }
-  await test.mine({ blocks: 2 });
+  await waitBlocks(2);
   const hubEnd = await bal(K.hub.address);
   const loss = { ETH: hubEnd.ETH - hubStart.ETH, USDT: hubEnd.USDT - hubStart.USDT, USDC: hubEnd.USDC - hubStart.USDC };
   const lossUsd = usdTotal(loss);
@@ -399,6 +489,14 @@ async function run({ name, cfg, attacker, seed = 7 }) {
     detectT: state.detect, containT: state.contain, containments: state.contains.length, lossAtFirstContainUsd: state.lossAtContain, delegatedBlocks: delegatedBlocks.count,
     alertsDuringAttack: state.alerts.filter(a => a.t >= -16).length, falseAlerts, firstAlert: firstAttackAlert?.kind || null,
     benign, signerDenials: signer.denials, log, alerts: state.alerts.slice(0, 8),
+    timing: BACKEND === "rpc" ? {
+      t0Block: Number(clock.t0Block),
+      detectBlocksAfterT0: state.detectAt && clock.t0Block !== null ? Number(state.detectAt.block - clock.t0Block) : null,
+      detectSecAfterT0: state.detectAt && clock.t0Wall ? (state.detectAt.wall - clock.t0Wall) / 1000 : null,
+      containBlocksAfterT0: state.containAt && clock.t0Block !== null ? Number(state.containAt.block - clock.t0Block) : null,
+      containSecAfterT0: state.containAt && clock.t0Wall ? (state.containAt.wall - clock.t0Wall) / 1000 : null,
+      steps: { ...stepStats },
+    } : undefined,
   };
 }
 
@@ -429,18 +527,25 @@ for (const a of ["A1", "A2", "A3", "A4", null]) plan.push(["R4t", a]);
 // E2 robustness: signer unfrozen 30 min after containment while the attacker keeps access.
 for (const c of ["R2", "R3", "R4"]) { CFG[c + "p"] = { ...CFG[c], label: CFG[c].label + " + early unfreeze (30 min)", recover: 150 }; for (const a of ["A1", "A3"]) plan.push([c + "p", a]); }
 plan.push(["R4p", "A4"]);
-const snap0 = await setup();
-let snap = snap0;
+const SEEDS = (process.env.SEEDS || "7").split(",").map(Number);
+const meta = { backend: BACKEND, chainId: CHAIN_ID, horizon: HORIZON, seeds: SEEDS, started: new Date().toISOString(),
+  client: await pub.request({ method: "web3_clientVersion" }).catch(() => null), rpc: BACKEND === "rpc" ? RPC : null };
+console.log(`backend=${BACKEND} chain=${CHAIN_ID} client=${meta.client} horizon=${HORIZON} seeds=${SEEDS.join(",")}`);
+let snap = BACKEND === "hardhat" ? await setup() : null;
 const results = [];
-for (const [c, a] of plan) {
+for (const [c, a] of plan) for (const seed of SEEDS) {
   const id = `${c}-${a || "benign"}`;
   if (only && only.startsWith("=") && id !== only.slice(1)) continue;
   if (only && !only.startsWith("=") && !id.startsWith(only)) continue;
-  await test.revert({ id: snap }); snap = await test.snapshot();
+  nextNonce.clear();
+  if (BACKEND === "hardhat") { await test.revert({ id: snap }); snap = await test.snapshot(); }
+  else { Object.assign(stepStats, { steps: 0, overruns: 0, maxBlocksPerStep: 0 }); await setupRpc(`${id}-s${seed}-${Date.now()}`); }
   const t = Date.now();
-  const res = await run({ name: id, cfg: CFG[c], attacker: a ? ATK[a] : null });
-  res.runtimeSec = Math.round((Date.now() - t) / 1000);
+  const res = await run({ name: id, cfg: CFG[c], attacker: a ? ATK[a] : null, seed });
+  res.seed = seed; res.runtimeSec = Math.round((Date.now() - t) / 1000);
   results.push(res);
-  console.log(`${id.padEnd(10)} loss $${(res.lossUsd / 1e6).toFixed(1)}M  detect ${res.detectT} contain ${res.containT} delegated ${res.delegatedBlocks}b  benign ${JSON.stringify(res.benign)}  ${res.runtimeSec}s`);
+  const tm = res.timing ? `  t+${res.timing.detectSecAfterT0 ?? "-"}s/${res.timing.containSecAfterT0 ?? "-"}s overruns ${res.timing.steps.overruns}/${res.timing.steps.steps}` : "";
+  console.log(`${id.padEnd(10)} s${seed} loss $${(res.lossUsd / 1e6).toFixed(1)}M  detect ${res.detectT} contain ${res.containT} delegated ${res.delegatedBlocks}b  benign ${JSON.stringify(res.benign)}${tm}  ${res.runtimeSec}s`);
 }
-fs.writeFileSync(new URL(`./results${only ? "-" + only : ""}.json`, import.meta.url), JSON.stringify(results, null, 2));
+const tag = [BACKEND === "rpc" ? "rpc" : null, only || null].filter(Boolean).join("-");
+fs.writeFileSync(new URL(`./results${tag ? "-" + tag : ""}.json`, import.meta.url), JSON.stringify({ meta, results }, null, 2));
