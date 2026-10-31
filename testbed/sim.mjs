@@ -276,6 +276,8 @@ async function run({ name, cfg, attacker, seed = 7 }) {
   const treasury = [K.hot14.address, K.hot16.address, K.hotB.address].map(a => getAddress(a));
   const watched = new Set([...treasury, getAddress(W.safe34)]);
   const benign = { requested: 0, completed: 0, escalated: 0, blocked: 0, paused: 0 };
+  const benignTx = [];   // [hash, t, wallet, asset, amount] for every signed-and-accepted benign withdrawal
+  const trace = [];      // TRACE=1: per-step balances, to locate where two runs diverge
   const hubStart = await bal(K.hub.address);
   const atk = { auths: [], mode: attacker ? (attacker.kind === "aware" ? "adaptive" : attacker.kind) : null, vectors: {} };
   let prevBal = {}; for (const a of treasury) prevBal[a] = (await bal(a)).ETH;
@@ -313,7 +315,7 @@ async function run({ name, cfg, attacker, seed = 7 }) {
     const req = asset === "ETH" ? { kind: "tx", wallet: w, to, value: amount, data: "0x", nonce, gas: 50_000n, intent }
       : { kind: "tx", wallet: w, to: W.usdt, value: 0n, data: encodeFunctionData({ abi: TRANSFER_ABI, functionName: "transfer", args: [to, amount] }), nonce, gas: 100_000n, intent };
     const res = await signer.request(req, { role: "service", who: "pipeline", block: tNow });
-    if (res.ok) { await send(res.raw, w, nonce); benign.completed++; }
+    if (res.ok) { const h = await send(res.raw, w, nonce); benign.completed++; benignTx.push([h, tNow, w, asset, amount]); }
     else if (res.reason === "escalate-manual") benign.escalated++;
     else benign.blocked++;
   }
@@ -437,6 +439,11 @@ async function run({ name, cfg, attacker, seed = 7 }) {
     // --- close the step (one block marks the passage of time)
     await closeStep();
     const bn = await pub.getBlockNumber();
+    if (process.env.TRACE) trace.push({ t: tNow, block: Number(bn),
+      hubETH: (await pub.getBalance({ address: K.hub.address })).toString(),
+      hot14ETH: (await pub.getBalance({ address: K.hot14.address })).toString(),
+      hot16ETH: (await pub.getBalance({ address: K.hot16.address })).toString(),
+      hot14Nonce: await pub.getTransactionCount({ address: K.hot14.address }) });
 
     // --- independent watcher (C4): tripwires + reconciliation against the intent ledger
     if (await delegated()) delegatedBlocks.count++;
@@ -479,6 +486,15 @@ async function run({ name, cfg, attacker, seed = 7 }) {
   }
   await waitBlocks(2);
   const hubEnd = await bal(K.hub.address);
+  // Benign withdrawals that actually landed: "completed" counts signed-and-sent; on a real chain some may fail or never be mined.
+  const landed = { success: 0, reverted: 0, missing: 0, rejectedAtSend: 0, failedList: [] };
+  for (const [h, t, w, asset, amount] of benignTx) {
+    if (!h) { landed.rejectedAtSend++; landed.failedList.push({ t, w, asset, amount: amount.toString(), why: "rejected-at-send" }); continue; }
+    const rc = await pub.getTransactionReceipt({ hash: h }).catch(() => null);
+    if (!rc) { landed.missing++; landed.failedList.push({ t, w, asset, amount: amount.toString(), why: "missing" }); }
+    else if (rc.status === "success") landed.success++;
+    else { landed.reverted++; landed.failedList.push({ t, w, asset, amount: amount.toString(), why: "reverted", block: Number(rc.blockNumber) }); }
+  }
   const loss = { ETH: hubEnd.ETH - hubStart.ETH, USDT: hubEnd.USDT - hubStart.USDT, USDC: hubEnd.USDC - hubStart.USDC };
   const lossUsd = usdTotal(loss);
   const firstAttackAlert = state.alerts.find(a => a.t >= -16);
@@ -488,7 +504,8 @@ async function run({ name, cfg, attacker, seed = 7 }) {
     lossUsd, loss: Object.fromEntries(Object.entries(loss).map(([k, v]) => [k, Number(v / E18)])),
     detectT: state.detect, containT: state.contain, containments: state.contains.length, lossAtFirstContainUsd: state.lossAtContain, delegatedBlocks: delegatedBlocks.count,
     alertsDuringAttack: state.alerts.filter(a => a.t >= -16).length, falseAlerts, firstAlert: firstAttackAlert?.kind || null,
-    benign, signerDenials: signer.denials, log, alerts: state.alerts.slice(0, 8),
+    benign, benignLanded: landed, signerDenials: signer.denials, log, alerts: state.alerts.slice(0, 8),
+    trace: process.env.TRACE ? trace : undefined,
     timing: BACKEND === "rpc" ? {
       t0Block: Number(clock.t0Block),
       detectBlocksAfterT0: state.detectAt && clock.t0Block !== null ? Number(state.detectAt.block - clock.t0Block) : null,
