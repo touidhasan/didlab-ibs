@@ -1,0 +1,5 @@
+R4t-A1     loss $0.0M  detect -16 contain null delegated 0b  benign {"requested":1339,"completed":726,"escalated":1,"blocked":0,"paused":612}  11s
+R4t-A2     loss $0.0M  detect -16 contain null delegated 0b  benign {"requested":1339,"completed":726,"escalated":1,"blocked":0,"paused":612}  12s
+R4t-A3     loss $0.0M  detect 0 contain null delegated 0b  benign {"requested":1339,"completed":726,"escalated":1,"blocked":0,"paused":612}  12s
+R4t-A4     loss $24.0M  detect 0 contain 0 delegated 0b  benign {"requested":1339,"completed":114,"escalated":0,"blocked":613,"paused":612}  68s
+R4t-benign loss $0.0M  detect null contain null delegated 0b  benign {"requested":1339,"completed":726,"escalated":1,"blocked":0,"paused":612}  7s

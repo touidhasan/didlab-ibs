@@ -1,0 +1,14 @@
+{
+  "name": "didlab-ibs-research-net",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Smoke test for the DIDLab research network (chain 252701)",
+  "scripts": {
+    "smoke": "node smoke7702.mjs"
+  },
+  "dependencies": {
+    "solc": "0.8.28",
+    "viem": "2.57.13"
+  }
+}

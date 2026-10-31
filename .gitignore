@@ -1,0 +1,22 @@
+# dependencies
+node_modules/
+
+# research-net: generated per deployment, never committed (contains validator private keys)
+research-net/nodes/
+research-net/networkFiles/
+research-net/config/genesis.json
+research-net/config/static-nodes.json
+research-net/.env
+
+# ad-hoc run outputs (curate into testbed/results/<date>/ instead)
+testbed/results*.json
+testbed/cache/
+testbed/artifacts/
+*.log
+!testbed/results/**/*.log
+
+# editors / OS
+.DS_Store
+.vscode/
+.idea/
+*.swp

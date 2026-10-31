@@ -1,0 +1,17 @@
+{
+  "name": "didlab-ibs-testbed",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Signing-path compromise testbed (Hardhat EDR, Prague) and Intent-Bound Signing defenses",
+  "scripts": {
+    "sim": "node sim.mjs",
+    "sim:quick": "HORIZON=60 node sim.mjs =R4-A1",
+    "devnode": "hardhat node --port 8599"
+  },
+  "dependencies": {
+    "@nomicfoundation/edr": "^0.25.0",
+    "hardhat": "^2.29.1",
+    "solc": "^0.8.28",
+    "viem": "^2.57.13"
+  }
+}

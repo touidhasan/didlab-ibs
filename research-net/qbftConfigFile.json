@@ -1,0 +1,108 @@
+{
+  "genesis": {
+    "config": {
+      "chainId": 252701,
+      "berlinBlock": 0,
+      "londonBlock": 0,
+      "shanghaiTime": 0,
+      "cancunTime": 0,
+      "pragueTime": 0,
+      "zeroBaseFee": true,
+      "blobSchedule": {
+        "cancun": {
+          "target": 3,
+          "max": 6,
+          "baseFeeUpdateFraction": 3338477
+        },
+        "prague": {
+          "target": 6,
+          "max": 9,
+          "baseFeeUpdateFraction": 5007716
+        }
+      },
+      "qbft": {
+        "blockperiodseconds": 2,
+        "epochlength": 30000,
+        "requesttimeoutseconds": 4
+      }
+    },
+    "nonce": "0x0",
+    "timestamp": "0x0",
+    "gasLimit": "0x3938700",
+    "difficulty": "0x1",
+    "mixHash": "0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365",
+    "coinbase": "0x0000000000000000000000000000000000000000",
+    "alloc": {
+      "000f3df6d732807ef1319fb7b8bb8522d0beac02": {
+        "comment": "system contract (BeaconRoots), code from go-ethereum params/protocol_params.go",
+        "balance": "0x0",
+        "nonce": "0x1",
+        "code": "0x3373fffffffffffffffffffffffffffffffffffffffe14604d57602036146024575f5ffd5b5f35801560495762001fff810690815414603c575f5ffd5b62001fff01545f5260205ff35b5f5ffd5b62001fff42064281555f359062001fff015500"
+      },
+      "0000f90827f1c53a10cb7a02335b175320002935": {
+        "comment": "system contract (HistoryStorage), code from go-ethereum params/protocol_params.go",
+        "balance": "0x0",
+        "nonce": "0x1",
+        "code": "0x3373fffffffffffffffffffffffffffffffffffffffe14604657602036036042575f35600143038111604257611fff81430311604257611fff9006545f5260205ff35b5f5ffd5b5f35611fff60014303065500"
+      },
+      "00000961ef480eb55e80d19ad83579a64c007002": {
+        "comment": "system contract (WithdrawalQueue), code from go-ethereum params/protocol_params.go",
+        "balance": "0x0",
+        "nonce": "0x1",
+        "code": "0x3373fffffffffffffffffffffffffffffffffffffffe1460cb5760115f54807fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff146101f457600182026001905f5b5f82111560685781019083028483029004916001019190604d565b909390049250505036603814608857366101f457346101f4575f5260205ff35b34106101f457600154600101600155600354806003026004013381556001015f35815560010160203590553360601b5f5260385f601437604c5fa0600101600355005b6003546002548082038060101160df575060105b5f5b8181146101835782810160030260040181604c02815460601b8152601401816001015481526020019060020154807fffffffffffffffffffffffffffffffff00000000000000000000000000000000168252906010019060401c908160381c81600701538160301c81600601538160281c81600501538160201c81600401538160181c81600301538160101c81600201538160081c81600101535360010160e1565b910180921461019557906002556101a0565b90505f6002555f6003555b5f54807fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff14156101cd57505f5b6001546002828201116101e25750505f6101e8565b01600290035b5f555f600155604c025ff35b5f5ffd"
+      },
+      "0000bbddc7ce488642fb579f8b00f3a590007251": {
+        "comment": "system contract (ConsolidationQueue), code from go-ethereum params/protocol_params.go",
+        "balance": "0x0",
+        "nonce": "0x1",
+        "code": "0x3373fffffffffffffffffffffffffffffffffffffffe1460d35760115f54807fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff1461019a57600182026001905f5b5f82111560685781019083028483029004916001019190604d565b9093900492505050366060146088573661019a573461019a575f5260205ff35b341061019a57600154600101600155600354806004026004013381556001015f358155600101602035815560010160403590553360601b5f5260605f60143760745fa0600101600355005b6003546002548082038060021160e7575060025b5f5b8181146101295782810160040260040181607402815460601b815260140181600101548152602001816002015481526020019060030154905260010160e9565b910180921461013b5790600255610146565b90505f6002555f6003555b5f54807fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff141561017357505f5b6001546001828201116101885750505f61018e565b01600190035b5f555f6001556074025ff35b5f5ffd"
+      },
+      "1dd9df8b2595baaea98f925280deab8a5a0d1ae0": {
+        "comment": "testbed account sigsim:deployer (key = keccak256('sigsim:deployer'), public test key)",
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "44848eda51b6abd566a10093144c07d8c6ee01c2": {
+        "comment": "testbed account sigsim:hot14 (key = keccak256('sigsim:hot14'), public test key)",
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "31b3ec865820d42db092b33ce213b05928234875": {
+        "comment": "testbed account sigsim:hot16 (key = keccak256('sigsim:hot16'), public test key)",
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "5ef11a10a0fef5fe7e5321a24b3bbb5b64c784ba": {
+        "comment": "testbed account sigsim:hotB (key = keccak256('sigsim:hotB'), public test key)",
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "31b9804250e12f0879bd28faac82c6be8c14aef0": {
+        "comment": "testbed account sigsim:cold (key = keccak256('sigsim:cold'), public test key)",
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "3f02ae3711106499a94424abb9884d8bd72eb5be": {
+        "comment": "testbed account sigsim:deposits (key = keccak256('sigsim:deposits'), public test key)",
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "34607bcaff737a6f1116e09d8e35d4f6aed441d5": {
+        "comment": "testbed account sigsim:attacker-operator (key = keccak256('sigsim:attacker-operator'), public test key)",
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "520b2815e177b5f023fc7cac5a0474bdabbbbdd3": {
+        "comment": "testbed account sigsim:attacker-hub (key = keccak256('sigsim:attacker-hub'), public test key)",
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "645d0fd6bde20e9c8444acafd04cf53ac5c86caf": {
+        "comment": "testbed account sigsim:watcher-gas (key = keccak256('sigsim:watcher-gas'), public test key)",
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "c598674a546ee2978b234ec1ab99939aa74e819c": {
+        "comment": "testbed account sigsim:intent-authority (key = keccak256('sigsim:intent-authority'), public test key)",
+        "balance": "0xd3c21bcecceda1000000"
+      }
+    }
+  },
+  "blockchain": {
+    "nodes": {
+      "generate": true,
+      "count": 4
+    }
+  }
+}

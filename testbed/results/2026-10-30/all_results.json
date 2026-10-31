@@ -1,0 +1,2853 @@
+[
+  {
+    "name": "R0-A1",
+    "config": "R0 Baseline (sign on request, manual response)",
+    "attacker": "A1 Binance-paced replay (incident schedule)",
+    "lossUsd": 3243769090,
+    "loss": {
+      "ETH": 200100,
+      "USDT": 1960537501,
+      "USDC": 823000000
+    },
+    "detectT": null,
+    "containT": null,
+    "containments": 0,
+    "lossAtFirstContainUsd": null,
+    "delegatedBlocks": 1149,
+    "alertsDuringAttack": 0,
+    "falseAlerts": 0,
+    "firstAlert": null,
+    "benign": {
+      "requested": 1339,
+      "completed": 727,
+      "escalated": 0,
+      "blocked": 0,
+      "paused": 612
+    },
+    "signerDenials": {},
+    "log": [
+      [
+        -16,
+        "attacker: obtained 50 authorizations for nonces 41..90"
+      ],
+      [
+        0,
+        "attacker: delegation tx submitted"
+      ],
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        1149,
+        "revocation submitted for 0x44848e (manual)"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [],
+    "runtimeSec": 61
+  },
+  {
+    "name": "R0-A2",
+    "config": "R0 Baseline (sign on request, manual response)",
+    "attacker": "A2 Blitz (atomic delegation+sweep, drains signed and sent in one block)",
+    "lossUsd": 3243815815,
+    "loss": {
+      "ETH": 200103,
+      "USDT": 1960576892,
+      "USDC": 823000000
+    },
+    "detectT": null,
+    "containT": null,
+    "containments": 0,
+    "lossAtFirstContainUsd": null,
+    "delegatedBlocks": 1149,
+    "alertsDuringAttack": 0,
+    "falseAlerts": 0,
+    "firstAlert": null,
+    "benign": {
+      "requested": 1339,
+      "completed": 727,
+      "escalated": 0,
+      "blocked": 0,
+      "paused": 612
+    },
+    "signerDenials": {},
+    "log": [
+      [
+        -16,
+        "attacker: obtained 50 authorizations for nonces 41..90"
+      ],
+      [
+        0,
+        "attacker: delegation tx submitted with atomic sweep + pre-signed drains"
+      ],
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        1149,
+        "revocation submitted for 0x44848e (manual)"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [],
+    "runtimeSec": 63
+  },
+  {
+    "name": "R0-A3",
+    "config": "R0 Baseline (sign on request, manual response)",
+    "attacker": "A3 Policy-aware (no EIP-7702; max-size plain transfers every block)",
+    "lossUsd": 2421241979,
+    "loss": {
+      "ETH": 200218,
+      "USDT": 1960739555,
+      "USDC": 0
+    },
+    "detectT": null,
+    "containT": null,
+    "containments": 0,
+    "lossAtFirstContainUsd": null,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 0,
+    "falseAlerts": 0,
+    "firstAlert": null,
+    "benign": {
+      "requested": 1339,
+      "completed": 727,
+      "escalated": 0,
+      "blocked": 0,
+      "paused": 612
+    },
+    "signerDenials": {},
+    "log": [
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [],
+    "runtimeSec": 66
+  },
+  {
+    "name": "R1-A1",
+    "config": "R1 Semantic policy at signer (C2+C3)",
+    "attacker": "A1 Binance-paced replay (incident schedule)",
+    "lossUsd": 95845600,
+    "loss": {
+      "ETH": 41672,
+      "USDT": 0,
+      "USDC": 0
+    },
+    "detectT": null,
+    "containT": null,
+    "containments": 0,
+    "lossAtFirstContainUsd": null,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 6204,
+    "falseAlerts": 0,
+    "firstAlert": "signer:auth7702-requested",
+    "benign": {
+      "requested": 1339,
+      "completed": 268,
+      "escalated": 1,
+      "blocked": 458,
+      "paused": 612
+    },
+    "signerDenials": {
+      "attacker:type-not-allowed": 1,
+      "attacker:velocity": 5745,
+      "pipeline:velocity": 458,
+      "pipeline:escalate-manual": 1
+    },
+    "log": [
+      [
+        -16,
+        "attacker: 7702 path denied, switching to capped plain transfers"
+      ],
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [
+      {
+        "t": -16,
+        "kind": "signer:auth7702-requested",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 1,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 1,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      }
+    ],
+    "runtimeSec": 7
+  },
+  {
+    "name": "R1-A2",
+    "config": "R1 Semantic policy at signer (C2+C3)",
+    "attacker": "A2 Blitz (atomic delegation+sweep, drains signed and sent in one block)",
+    "lossUsd": 95845600,
+    "loss": {
+      "ETH": 41672,
+      "USDT": 0,
+      "USDC": 0
+    },
+    "detectT": null,
+    "containT": null,
+    "containments": 0,
+    "lossAtFirstContainUsd": null,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 6204,
+    "falseAlerts": 0,
+    "firstAlert": "signer:auth7702-requested",
+    "benign": {
+      "requested": 1339,
+      "completed": 268,
+      "escalated": 1,
+      "blocked": 458,
+      "paused": 612
+    },
+    "signerDenials": {
+      "attacker:type-not-allowed": 1,
+      "attacker:velocity": 5745,
+      "pipeline:velocity": 458,
+      "pipeline:escalate-manual": 1
+    },
+    "log": [
+      [
+        -16,
+        "attacker: 7702 path denied, switching to capped plain transfers"
+      ],
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [
+      {
+        "t": -16,
+        "kind": "signer:auth7702-requested",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 1,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 1,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      }
+    ],
+    "runtimeSec": 7
+  },
+  {
+    "name": "R1-A3",
+    "config": "R1 Semantic policy at signer (C2+C3)",
+    "attacker": "A3 Policy-aware (no EIP-7702; max-size plain transfers every block)",
+    "lossUsd": 95845600,
+    "loss": {
+      "ETH": 41672,
+      "USDT": 0,
+      "USDC": 0
+    },
+    "detectT": null,
+    "containT": null,
+    "containments": 0,
+    "lossAtFirstContainUsd": null,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 6203,
+    "falseAlerts": 0,
+    "firstAlert": "signer:velocity",
+    "benign": {
+      "requested": 1339,
+      "completed": 268,
+      "escalated": 1,
+      "blocked": 458,
+      "paused": 612
+    },
+    "signerDenials": {
+      "attacker:velocity": 5745,
+      "pipeline:velocity": 458,
+      "pipeline:escalate-manual": 1
+    },
+    "log": [
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 1,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 1,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 1,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      }
+    ],
+    "runtimeSec": 7
+  },
+  {
+    "name": "R2-A1",
+    "config": "R2 Autonomous containment only (C4)",
+    "attacker": "A1 Binance-paced replay (incident schedule)",
+    "lossUsd": 0,
+    "loss": {
+      "ETH": 0,
+      "USDT": 0,
+      "USDC": 0
+    },
+    "detectT": 0,
+    "containT": 0,
+    "containments": 1,
+    "lossAtFirstContainUsd": 0,
+    "delegatedBlocks": 1,
+    "alertsDuringAttack": 1,
+    "falseAlerts": 0,
+    "firstAlert": "watch:code-at-treasury-eoa",
+    "benign": {
+      "requested": 1339,
+      "completed": 114,
+      "escalated": 0,
+      "blocked": 613,
+      "paused": 612
+    },
+    "signerDenials": {
+      "pipeline:frozen": 613,
+      "attacker:frozen": 11
+    },
+    "log": [
+      [
+        -16,
+        "attacker: obtained 50 authorizations for nonces 41..90"
+      ],
+      [
+        0,
+        "attacker: delegation tx submitted"
+      ],
+      [
+        0,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        0,
+        "revocation submitted for 0x44848e (auto)"
+      ],
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [
+      {
+        "t": 0,
+        "kind": "watch:code-at-treasury-eoa",
+        "who": "chain"
+      }
+    ],
+    "runtimeSec": 10
+  },
+  {
+    "name": "R2-A2",
+    "config": "R2 Autonomous containment only (C4)",
+    "attacker": "A2 Blitz (atomic delegation+sweep, drains signed and sent in one block)",
+    "lossUsd": 2209684250,
+    "loss": {
+      "ETH": 195193,
+      "USDT": 1760739555,
+      "USDC": 0
+    },
+    "detectT": 0,
+    "containT": 0,
+    "containments": 1,
+    "lossAtFirstContainUsd": 2209684250,
+    "delegatedBlocks": 1,
+    "alertsDuringAttack": 9,
+    "falseAlerts": 0,
+    "firstAlert": "watch:unexplained-native-tx",
+    "benign": {
+      "requested": 1339,
+      "completed": 114,
+      "escalated": 0,
+      "blocked": 613,
+      "paused": 612
+    },
+    "signerDenials": {
+      "pipeline:frozen": 613,
+      "attacker:frozen": 7
+    },
+    "log": [
+      [
+        -16,
+        "attacker: obtained 50 authorizations for nonces 41..90"
+      ],
+      [
+        0,
+        "attacker: delegation tx submitted with atomic sweep + pre-signed drains"
+      ],
+      [
+        0,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        0,
+        "revocation submitted for 0x44848e (auto)"
+      ],
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [
+      {
+        "t": 0,
+        "kind": "watch:unexplained-native-tx",
+        "who": "chain"
+      },
+      {
+        "t": 0,
+        "kind": "watch:unexplained-native-tx",
+        "who": "chain"
+      },
+      {
+        "t": 0,
+        "kind": "watch:unexplained-token-outflow",
+        "who": "chain"
+      },
+      {
+        "t": 0,
+        "kind": "watch:unexplained-token-outflow",
+        "who": "chain"
+      },
+      {
+        "t": 0,
+        "kind": "watch:unexplained-token-outflow",
+        "who": "chain"
+      },
+      {
+        "t": 0,
+        "kind": "watch:unexplained-native-drop",
+        "who": "chain"
+      },
+      {
+        "t": 0,
+        "kind": "watch:code-at-treasury-eoa",
+        "who": "chain"
+      },
+      {
+        "t": 0,
+        "kind": "watch:unexplained-native-drop",
+        "who": "chain"
+      }
+    ],
+    "runtimeSec": 14
+  },
+  {
+    "name": "R2-A3",
+    "config": "R2 Autonomous containment only (C4)",
+    "attacker": "A3 Policy-aware (no EIP-7702; max-size plain transfers every block)",
+    "lossUsd": 2209681950,
+    "loss": {
+      "ETH": 195192,
+      "USDT": 1760739555,
+      "USDC": 0
+    },
+    "detectT": 0,
+    "containT": 0,
+    "containments": 1,
+    "lossAtFirstContainUsd": 2209681950,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 9,
+    "falseAlerts": 0,
+    "firstAlert": "watch:unexplained-native-tx",
+    "benign": {
+      "requested": 1339,
+      "completed": 114,
+      "escalated": 0,
+      "blocked": 613,
+      "paused": 612
+    },
+    "signerDenials": {
+      "pipeline:frozen": 613
+    },
+    "log": [
+      [
+        0,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [
+      {
+        "t": 0,
+        "kind": "watch:unexplained-native-tx",
+        "who": "chain"
+      },
+      {
+        "t": 0,
+        "kind": "watch:unexplained-native-tx",
+        "who": "chain"
+      },
+      {
+        "t": 0,
+        "kind": "watch:unexplained-native-tx",
+        "who": "chain"
+      },
+      {
+        "t": 0,
+        "kind": "watch:unexplained-token-outflow",
+        "who": "chain"
+      },
+      {
+        "t": 0,
+        "kind": "watch:unexplained-token-outflow",
+        "who": "chain"
+      },
+      {
+        "t": 0,
+        "kind": "watch:unexplained-token-outflow",
+        "who": "chain"
+      },
+      {
+        "t": 0,
+        "kind": "watch:unexplained-native-drop",
+        "who": "chain"
+      },
+      {
+        "t": 0,
+        "kind": "watch:unexplained-native-drop",
+        "who": "chain"
+      }
+    ],
+    "runtimeSec": 16
+  },
+  {
+    "name": "R3-A1",
+    "config": "R3 Semantic policy + containment (C2+C3+C4)",
+    "attacker": "A1 Binance-paced replay (incident schedule)",
+    "lossUsd": 0,
+    "loss": {
+      "ETH": 0,
+      "USDT": 0,
+      "USDC": 0
+    },
+    "detectT": -16,
+    "containT": -16,
+    "containments": 1,
+    "lossAtFirstContainUsd": 0,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 1,
+    "falseAlerts": 0,
+    "firstAlert": "signer:auth7702-requested",
+    "benign": {
+      "requested": 1339,
+      "completed": 98,
+      "escalated": 0,
+      "blocked": 629,
+      "paused": 612
+    },
+    "signerDenials": {
+      "attacker:type-not-allowed": 1,
+      "pipeline:frozen": 629,
+      "attacker:frozen": 6894
+    },
+    "log": [
+      [
+        -16,
+        "attacker: 7702 path denied, switching to capped plain transfers"
+      ],
+      [
+        -16,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [
+      {
+        "t": -16,
+        "kind": "signer:auth7702-requested",
+        "who": "attacker"
+      }
+    ],
+    "runtimeSec": 13
+  },
+  {
+    "name": "R3-A2",
+    "config": "R3 Semantic policy + containment (C2+C3+C4)",
+    "attacker": "A2 Blitz (atomic delegation+sweep, drains signed and sent in one block)",
+    "lossUsd": 0,
+    "loss": {
+      "ETH": 0,
+      "USDT": 0,
+      "USDC": 0
+    },
+    "detectT": -16,
+    "containT": -16,
+    "containments": 1,
+    "lossAtFirstContainUsd": 0,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 1,
+    "falseAlerts": 0,
+    "firstAlert": "signer:auth7702-requested",
+    "benign": {
+      "requested": 1339,
+      "completed": 98,
+      "escalated": 0,
+      "blocked": 629,
+      "paused": 612
+    },
+    "signerDenials": {
+      "attacker:type-not-allowed": 1,
+      "pipeline:frozen": 629,
+      "attacker:frozen": 6894
+    },
+    "log": [
+      [
+        -16,
+        "attacker: 7702 path denied, switching to capped plain transfers"
+      ],
+      [
+        -16,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [
+      {
+        "t": -16,
+        "kind": "signer:auth7702-requested",
+        "who": "attacker"
+      }
+    ],
+    "runtimeSec": 13
+  },
+  {
+    "name": "R3-A3",
+    "config": "R3 Semantic policy + containment (C2+C3+C4)",
+    "attacker": "A3 Policy-aware (no EIP-7702; max-size plain transfers every block)",
+    "lossUsd": 23975200,
+    "loss": {
+      "ETH": 10424,
+      "USDT": 0,
+      "USDC": 0
+    },
+    "detectT": 0,
+    "containT": 0,
+    "containments": 1,
+    "lossAtFirstContainUsd": 23975200,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 32,
+    "falseAlerts": 0,
+    "firstAlert": "signer:velocity",
+    "benign": {
+      "requested": 1339,
+      "completed": 114,
+      "escalated": 0,
+      "blocked": 613,
+      "paused": 612
+    },
+    "signerDenials": {
+      "attacker:velocity": 5,
+      "pipeline:frozen": 613,
+      "attacker:frozen": 5740
+    },
+    "log": [
+      [
+        0,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "watch:unexplained-native-tx",
+        "who": "chain"
+      },
+      {
+        "t": 0,
+        "kind": "watch:unexplained-native-tx",
+        "who": "chain"
+      },
+      {
+        "t": 0,
+        "kind": "watch:unexplained-native-tx",
+        "who": "chain"
+      }
+    ],
+    "runtimeSec": 12
+  },
+  {
+    "name": "R4-A1",
+    "config": "R4 Full intent-bound signing (C1+C2+C3+C4)",
+    "attacker": "A1 Binance-paced replay (incident schedule)",
+    "lossUsd": 0,
+    "loss": {
+      "ETH": 0,
+      "USDT": 0,
+      "USDC": 0
+    },
+    "detectT": -16,
+    "containT": -16,
+    "containments": 1,
+    "lossAtFirstContainUsd": 0,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 1,
+    "falseAlerts": 0,
+    "firstAlert": "signer:auth7702-requested",
+    "benign": {
+      "requested": 1339,
+      "completed": 98,
+      "escalated": 0,
+      "blocked": 629,
+      "paused": 612
+    },
+    "signerDenials": {
+      "attacker:type-not-allowed": 1,
+      "pipeline:frozen": 629,
+      "attacker:frozen": 6894
+    },
+    "log": [
+      [
+        -16,
+        "attacker: 7702 path denied, switching to capped plain transfers"
+      ],
+      [
+        -16,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [
+      {
+        "t": -16,
+        "kind": "signer:auth7702-requested",
+        "who": "attacker"
+      }
+    ],
+    "runtimeSec": 13
+  },
+  {
+    "name": "R4-A2",
+    "config": "R4 Full intent-bound signing (C1+C2+C3+C4)",
+    "attacker": "A2 Blitz (atomic delegation+sweep, drains signed and sent in one block)",
+    "lossUsd": 0,
+    "loss": {
+      "ETH": 0,
+      "USDT": 0,
+      "USDC": 0
+    },
+    "detectT": -16,
+    "containT": -16,
+    "containments": 1,
+    "lossAtFirstContainUsd": 0,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 1,
+    "falseAlerts": 0,
+    "firstAlert": "signer:auth7702-requested",
+    "benign": {
+      "requested": 1339,
+      "completed": 98,
+      "escalated": 0,
+      "blocked": 629,
+      "paused": 612
+    },
+    "signerDenials": {
+      "attacker:type-not-allowed": 1,
+      "pipeline:frozen": 629,
+      "attacker:frozen": 6894
+    },
+    "log": [
+      [
+        -16,
+        "attacker: 7702 path denied, switching to capped plain transfers"
+      ],
+      [
+        -16,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [
+      {
+        "t": -16,
+        "kind": "signer:auth7702-requested",
+        "who": "attacker"
+      }
+    ],
+    "runtimeSec": 13
+  },
+  {
+    "name": "R4-A3",
+    "config": "R4 Full intent-bound signing (C1+C2+C3+C4)",
+    "attacker": "A3 Policy-aware (no EIP-7702; max-size plain transfers every block)",
+    "lossUsd": 0,
+    "loss": {
+      "ETH": 0,
+      "USDT": 0,
+      "USDC": 0
+    },
+    "detectT": 0,
+    "containT": 0,
+    "containments": 1,
+    "lossAtFirstContainUsd": 0,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 6,
+    "falseAlerts": 0,
+    "firstAlert": "signer:no-intent",
+    "benign": {
+      "requested": 1339,
+      "completed": 114,
+      "escalated": 0,
+      "blocked": 613,
+      "paused": 612
+    },
+    "signerDenials": {
+      "attacker:no-intent": 6,
+      "pipeline:frozen": 613,
+      "attacker:frozen": 6888
+    },
+    "log": [
+      [
+        0,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      }
+    ],
+    "runtimeSec": 13
+  },
+  {
+    "name": "R4-A4",
+    "config": "R4 Full intent-bound signing (C1+C2+C3+C4)",
+    "attacker": "A4 Policy-aware + intent authority also compromised",
+    "lossUsd": 23975200,
+    "loss": {
+      "ETH": 10424,
+      "USDT": 0,
+      "USDC": 0
+    },
+    "detectT": 0,
+    "containT": 0,
+    "containments": 1,
+    "lossAtFirstContainUsd": 23975200,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 5,
+    "falseAlerts": 0,
+    "firstAlert": "signer:velocity",
+    "benign": {
+      "requested": 1339,
+      "completed": 114,
+      "escalated": 0,
+      "blocked": 613,
+      "paused": 612
+    },
+    "signerDenials": {
+      "attacker:velocity": 5,
+      "pipeline:frozen": 613,
+      "attacker:frozen": 5740
+    },
+    "log": [
+      [
+        0,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      }
+    ],
+    "runtimeSec": 72
+  },
+  {
+    "name": "R0-benign",
+    "config": "R0 Baseline (sign on request, manual response)",
+    "attacker": "none (benign only)",
+    "lossUsd": 0,
+    "loss": {
+      "ETH": 0,
+      "USDT": 0,
+      "USDC": 0
+    },
+    "detectT": null,
+    "containT": null,
+    "containments": 0,
+    "lossAtFirstContainUsd": null,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 0,
+    "falseAlerts": 0,
+    "firstAlert": null,
+    "benign": {
+      "requested": 1339,
+      "completed": 727,
+      "escalated": 0,
+      "blocked": 0,
+      "paused": 612
+    },
+    "signerDenials": {},
+    "log": [
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [],
+    "runtimeSec": 4
+  },
+  {
+    "name": "R1-benign",
+    "config": "R1 Semantic policy at signer (C2+C3)",
+    "attacker": "none (benign only)",
+    "lossUsd": 0,
+    "loss": {
+      "ETH": 0,
+      "USDT": 0,
+      "USDC": 0
+    },
+    "detectT": null,
+    "containT": null,
+    "containments": 0,
+    "lossAtFirstContainUsd": null,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 0,
+    "falseAlerts": 0,
+    "firstAlert": null,
+    "benign": {
+      "requested": 1339,
+      "completed": 726,
+      "escalated": 1,
+      "blocked": 0,
+      "paused": 612
+    },
+    "signerDenials": {
+      "pipeline:escalate-manual": 1
+    },
+    "log": [
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [],
+    "runtimeSec": 4
+  },
+  {
+    "name": "R2-benign",
+    "config": "R2 Autonomous containment only (C4)",
+    "attacker": "none (benign only)",
+    "lossUsd": 0,
+    "loss": {
+      "ETH": 0,
+      "USDT": 0,
+      "USDC": 0
+    },
+    "detectT": null,
+    "containT": null,
+    "containments": 0,
+    "lossAtFirstContainUsd": null,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 0,
+    "falseAlerts": 0,
+    "firstAlert": null,
+    "benign": {
+      "requested": 1339,
+      "completed": 727,
+      "escalated": 0,
+      "blocked": 0,
+      "paused": 612
+    },
+    "signerDenials": {},
+    "log": [
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [],
+    "runtimeSec": 5
+  },
+  {
+    "name": "R3-benign",
+    "config": "R3 Semantic policy + containment (C2+C3+C4)",
+    "attacker": "none (benign only)",
+    "lossUsd": 0,
+    "loss": {
+      "ETH": 0,
+      "USDT": 0,
+      "USDC": 0
+    },
+    "detectT": null,
+    "containT": null,
+    "containments": 0,
+    "lossAtFirstContainUsd": null,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 0,
+    "falseAlerts": 0,
+    "firstAlert": null,
+    "benign": {
+      "requested": 1339,
+      "completed": 726,
+      "escalated": 1,
+      "blocked": 0,
+      "paused": 612
+    },
+    "signerDenials": {
+      "pipeline:escalate-manual": 1
+    },
+    "log": [
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [],
+    "runtimeSec": 5
+  },
+  {
+    "name": "R4-benign",
+    "config": "R4 Full intent-bound signing (C1+C2+C3+C4)",
+    "attacker": "none (benign only)",
+    "lossUsd": 0,
+    "loss": {
+      "ETH": 0,
+      "USDT": 0,
+      "USDC": 0
+    },
+    "detectT": null,
+    "containT": null,
+    "containments": 0,
+    "lossAtFirstContainUsd": null,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 0,
+    "falseAlerts": 0,
+    "firstAlert": null,
+    "benign": {
+      "requested": 1339,
+      "completed": 726,
+      "escalated": 1,
+      "blocked": 0,
+      "paused": 612
+    },
+    "signerDenials": {
+      "pipeline:escalate-manual": 1
+    },
+    "log": [
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [],
+    "runtimeSec": 6
+  },
+  {
+    "name": "R2p-A1",
+    "config": "R2 Autonomous containment only (C4) + early unfreeze (30 min)",
+    "attacker": "A1 Binance-paced replay (incident schedule)",
+    "lossUsd": 2286031943,
+    "loss": {
+      "ETH": 170219,
+      "USDT": 1851525954,
+      "USDC": 43000000
+    },
+    "detectT": 0,
+    "containT": 0,
+    "containments": 6,
+    "lossAtFirstContainUsd": 0,
+    "delegatedBlocks": 5,
+    "alertsDuringAttack": 12,
+    "falseAlerts": 0,
+    "firstAlert": "watch:code-at-treasury-eoa",
+    "benign": {
+      "requested": 1339,
+      "completed": 252,
+      "escalated": 0,
+      "blocked": 475,
+      "paused": 612
+    },
+    "signerDenials": {
+      "pipeline:frozen": 475,
+      "attacker:frozen": 5
+    },
+    "log": [
+      [
+        -16,
+        "attacker: obtained 50 authorizations for nonces 41..90"
+      ],
+      [
+        0,
+        "attacker: delegation tx submitted"
+      ],
+      [
+        0,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        0,
+        "revocation submitted for 0x44848e (auto)"
+      ],
+      [
+        150,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        195,
+        "attacker: re-delegated Binance 14"
+      ],
+      [
+        195,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        195,
+        "revocation submitted for 0x44848e (auto)"
+      ],
+      [
+        345,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        416,
+        "attacker: re-delegated Binance 14"
+      ],
+      [
+        416,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        416,
+        "revocation submitted for 0x44848e (auto)"
+      ],
+      [
+        566,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        691,
+        "attacker: re-delegated Binance 14"
+      ],
+      [
+        691,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        691,
+        "revocation submitted for 0x44848e (auto)"
+      ],
+      [
+        841,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        884,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        1034,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        1076,
+        "attacker: re-delegated Binance 14"
+      ],
+      [
+        1076,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        1076,
+        "revocation submitted for 0x44848e (auto)"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [
+      {
+        "t": 0,
+        "kind": "watch:code-at-treasury-eoa",
+        "who": "chain"
+      },
+      {
+        "t": 195,
+        "kind": "watch:unexplained-token-outflow",
+        "who": "chain"
+      },
+      {
+        "t": 195,
+        "kind": "watch:code-at-treasury-eoa",
+        "who": "chain"
+      },
+      {
+        "t": 416,
+        "kind": "watch:unexplained-token-outflow",
+        "who": "chain"
+      },
+      {
+        "t": 416,
+        "kind": "watch:unexplained-native-drop",
+        "who": "chain"
+      },
+      {
+        "t": 416,
+        "kind": "watch:code-at-treasury-eoa",
+        "who": "chain"
+      },
+      {
+        "t": 691,
+        "kind": "watch:code-at-treasury-eoa",
+        "who": "chain"
+      },
+      {
+        "t": 884,
+        "kind": "watch:unexplained-native-tx",
+        "who": "chain"
+      }
+    ],
+    "runtimeSec": 14
+  },
+  {
+    "name": "R2p-A3",
+    "config": "R2 Autonomous containment only (C4) + early unfreeze (30 min)",
+    "attacker": "A3 Policy-aware (no EIP-7702; max-size plain transfers every block)",
+    "lossUsd": 2221242967,
+    "loss": {
+      "ETH": 200218,
+      "USDT": 1760739555,
+      "USDC": 0
+    },
+    "detectT": 0,
+    "containT": 0,
+    "containments": 4,
+    "lossAtFirstContainUsd": 2209681950,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 15,
+    "falseAlerts": 0,
+    "firstAlert": "watch:unexplained-native-tx",
+    "benign": {
+      "requested": 1339,
+      "completed": 249,
+      "escalated": 0,
+      "blocked": 478,
+      "paused": 612
+    },
+    "signerDenials": {
+      "pipeline:frozen": 478
+    },
+    "log": [
+      [
+        0,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        150,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        200,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        350,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        400,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        550,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        1070,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [
+      {
+        "t": 0,
+        "kind": "watch:unexplained-native-tx",
+        "who": "chain"
+      },
+      {
+        "t": 0,
+        "kind": "watch:unexplained-native-tx",
+        "who": "chain"
+      },
+      {
+        "t": 0,
+        "kind": "watch:unexplained-native-tx",
+        "who": "chain"
+      },
+      {
+        "t": 0,
+        "kind": "watch:unexplained-token-outflow",
+        "who": "chain"
+      },
+      {
+        "t": 0,
+        "kind": "watch:unexplained-token-outflow",
+        "who": "chain"
+      },
+      {
+        "t": 0,
+        "kind": "watch:unexplained-token-outflow",
+        "who": "chain"
+      },
+      {
+        "t": 0,
+        "kind": "watch:unexplained-native-drop",
+        "who": "chain"
+      },
+      {
+        "t": 0,
+        "kind": "watch:unexplained-native-drop",
+        "who": "chain"
+      }
+    ],
+    "runtimeSec": 28
+  },
+  {
+    "name": "R3p-A1",
+    "config": "R3 Semantic policy + containment (C2+C3+C4) + early unfreeze (30 min)",
+    "attacker": "A1 Binance-paced replay (incident schedule)",
+    "lossUsd": 98840200,
+    "loss": {
+      "ETH": 42974,
+      "USDT": 0,
+      "USDC": 0
+    },
+    "detectT": -16,
+    "containT": -16,
+    "containments": 9,
+    "lossAtFirstContainUsd": 0,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 145,
+    "falseAlerts": 0,
+    "firstAlert": "signer:auth7702-requested",
+    "benign": {
+      "requested": 1339,
+      "completed": 52,
+      "escalated": 0,
+      "blocked": 675,
+      "paused": 612
+    },
+    "signerDenials": {
+      "attacker:type-not-allowed": 1,
+      "pipeline:frozen": 674,
+      "attacker:frozen": 5844,
+      "attacker:velocity": 35,
+      "pipeline:velocity": 1
+    },
+    "log": [
+      [
+        -16,
+        "attacker: 7702 path denied, switching to capped plain transfers"
+      ],
+      [
+        -16,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        134,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        134,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        284,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        284,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        434,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        434,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        584,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        584,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        734,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        734,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        884,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        884,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        1034,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        1034,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ],
+      [
+        1152,
+        "containment: signer frozen, replenishment halted"
+      ]
+    ],
+    "alerts": [
+      {
+        "t": -16,
+        "kind": "signer:auth7702-requested",
+        "who": "attacker"
+      },
+      {
+        "t": 134,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 134,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 134,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 134,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 134,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 134,
+        "kind": "watch:unexplained-native-tx",
+        "who": "chain"
+      },
+      {
+        "t": 134,
+        "kind": "watch:unexplained-native-tx",
+        "who": "chain"
+      }
+    ],
+    "runtimeSec": 12
+  },
+  {
+    "name": "R3p-A3",
+    "config": "R3 Semantic policy + containment (C2+C3+C4) + early unfreeze (30 min)",
+    "attacker": "A3 Policy-aware (no EIP-7702; max-size plain transfers every block)",
+    "lossUsd": 97842000,
+    "loss": {
+      "ETH": 42540,
+      "USDT": 0,
+      "USDC": 0
+    },
+    "detectT": 0,
+    "containT": 0,
+    "containments": 9,
+    "lossAtFirstContainUsd": 23975200,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 145,
+    "falseAlerts": 0,
+    "firstAlert": "signer:velocity",
+    "benign": {
+      "requested": 1339,
+      "completed": 69,
+      "escalated": 0,
+      "blocked": 658,
+      "paused": 612
+    },
+    "signerDenials": {
+      "attacker:velocity": 40,
+      "pipeline:frozen": 657,
+      "attacker:frozen": 5705,
+      "pipeline:velocity": 1
+    },
+    "log": [
+      [
+        0,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        150,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        150,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        300,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        300,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        450,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        450,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        600,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        600,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        750,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        750,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        900,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        900,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        1050,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        1050,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ],
+      [
+        1152,
+        "containment: signer frozen, replenishment halted"
+      ]
+    ],
+    "alerts": [
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "watch:unexplained-native-tx",
+        "who": "chain"
+      },
+      {
+        "t": 0,
+        "kind": "watch:unexplained-native-tx",
+        "who": "chain"
+      },
+      {
+        "t": 0,
+        "kind": "watch:unexplained-native-tx",
+        "who": "chain"
+      }
+    ],
+    "runtimeSec": 12
+  },
+  {
+    "name": "R4p-A1",
+    "config": "R4 Full intent-bound signing (C1+C2+C3+C4) + early unfreeze (30 min)",
+    "attacker": "A1 Binance-paced replay (incident schedule)",
+    "lossUsd": 0,
+    "loss": {
+      "ETH": 0,
+      "USDT": 0,
+      "USDC": 0
+    },
+    "detectT": -16,
+    "containT": -16,
+    "containments": 8,
+    "lossAtFirstContainUsd": 0,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 43,
+    "falseAlerts": 0,
+    "firstAlert": "signer:auth7702-requested",
+    "benign": {
+      "requested": 1339,
+      "completed": 101,
+      "escalated": 0,
+      "blocked": 626,
+      "paused": 612
+    },
+    "signerDenials": {
+      "attacker:type-not-allowed": 1,
+      "pipeline:frozen": 626,
+      "attacker:frozen": 6852,
+      "attacker:no-intent": 42
+    },
+    "log": [
+      [
+        -16,
+        "attacker: 7702 path denied, switching to capped plain transfers"
+      ],
+      [
+        -16,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        134,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        134,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        284,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        284,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        434,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        434,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        584,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        584,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        734,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        734,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        884,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        884,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        1034,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        1034,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [
+      {
+        "t": -16,
+        "kind": "signer:auth7702-requested",
+        "who": "attacker"
+      },
+      {
+        "t": 134,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 134,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 134,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 134,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 134,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 134,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 284,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      }
+    ],
+    "runtimeSec": 13
+  },
+  {
+    "name": "R4p-A3",
+    "config": "R4 Full intent-bound signing (C1+C2+C3+C4) + early unfreeze (30 min)",
+    "attacker": "A3 Policy-aware (no EIP-7702; max-size plain transfers every block)",
+    "lossUsd": 0,
+    "loss": {
+      "ETH": 0,
+      "USDT": 0,
+      "USDC": 0
+    },
+    "detectT": 0,
+    "containT": 0,
+    "containments": 8,
+    "lossAtFirstContainUsd": 0,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 48,
+    "falseAlerts": 0,
+    "firstAlert": "signer:no-intent",
+    "benign": {
+      "requested": 1339,
+      "completed": 118,
+      "escalated": 0,
+      "blocked": 609,
+      "paused": 612
+    },
+    "signerDenials": {
+      "attacker:no-intent": 48,
+      "pipeline:frozen": 609,
+      "attacker:frozen": 6846
+    },
+    "log": [
+      [
+        0,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        150,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        150,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        300,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        300,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        450,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        450,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        600,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        600,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        750,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        750,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        900,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        900,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        1050,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        1050,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 150,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 150,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      }
+    ],
+    "runtimeSec": 13
+  },
+  {
+    "name": "R4p-A4",
+    "config": "R4 Full intent-bound signing (C1+C2+C3+C4) + early unfreeze (30 min)",
+    "attacker": "A4 Policy-aware + intent authority also compromised",
+    "lossUsd": 97842000,
+    "loss": {
+      "ETH": 42540,
+      "USDT": 0,
+      "USDC": 0
+    },
+    "detectT": 0,
+    "containT": 0,
+    "containments": 9,
+    "lossAtFirstContainUsd": 23975200,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 41,
+    "falseAlerts": 0,
+    "firstAlert": "signer:velocity",
+    "benign": {
+      "requested": 1339,
+      "completed": 69,
+      "escalated": 0,
+      "blocked": 658,
+      "paused": 612
+    },
+    "signerDenials": {
+      "attacker:velocity": 40,
+      "pipeline:frozen": 657,
+      "attacker:frozen": 5705,
+      "pipeline:velocity": 1
+    },
+    "log": [
+      [
+        0,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        150,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        150,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        300,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        300,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        450,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        450,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        600,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        600,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        750,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        750,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        900,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        900,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        1050,
+        "recovery: signer unfrozen (attacker not yet evicted)"
+      ],
+      [
+        1050,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ],
+      [
+        1152,
+        "containment: signer frozen, replenishment halted"
+      ]
+    ],
+    "alerts": [
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 150,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 150,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 150,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      }
+    ],
+    "runtimeSec": 72
+  },
+  {
+    "name": "R4t-A1",
+    "config": "R4t Full IBS with tiered response",
+    "attacker": "A1 Binance-paced replay (incident schedule)",
+    "lossUsd": 0,
+    "loss": {
+      "ETH": 0,
+      "USDT": 0,
+      "USDC": 0
+    },
+    "detectT": -16,
+    "containT": null,
+    "containments": 0,
+    "lossAtFirstContainUsd": null,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 6895,
+    "falseAlerts": 0,
+    "firstAlert": "signer:auth7702-requested",
+    "benign": {
+      "requested": 1339,
+      "completed": 726,
+      "escalated": 1,
+      "blocked": 0,
+      "paused": 612
+    },
+    "signerDenials": {
+      "attacker:type-not-allowed": 1,
+      "attacker:no-intent": 6894,
+      "pipeline:escalate-manual": 1
+    },
+    "log": [
+      [
+        -16,
+        "attacker: 7702 path denied, switching to capped plain transfers"
+      ],
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [
+      {
+        "t": -16,
+        "kind": "signer:auth7702-requested",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 1,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      }
+    ],
+    "runtimeSec": 11
+  },
+  {
+    "name": "R4t-A2",
+    "config": "R4t Full IBS with tiered response",
+    "attacker": "A2 Blitz (atomic delegation+sweep, drains signed and sent in one block)",
+    "lossUsd": 0,
+    "loss": {
+      "ETH": 0,
+      "USDT": 0,
+      "USDC": 0
+    },
+    "detectT": -16,
+    "containT": null,
+    "containments": 0,
+    "lossAtFirstContainUsd": null,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 6895,
+    "falseAlerts": 0,
+    "firstAlert": "signer:auth7702-requested",
+    "benign": {
+      "requested": 1339,
+      "completed": 726,
+      "escalated": 1,
+      "blocked": 0,
+      "paused": 612
+    },
+    "signerDenials": {
+      "attacker:type-not-allowed": 1,
+      "attacker:no-intent": 6894,
+      "pipeline:escalate-manual": 1
+    },
+    "log": [
+      [
+        -16,
+        "attacker: 7702 path denied, switching to capped plain transfers"
+      ],
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [
+      {
+        "t": -16,
+        "kind": "signer:auth7702-requested",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 1,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      }
+    ],
+    "runtimeSec": 12
+  },
+  {
+    "name": "R4t-A3",
+    "config": "R4t Full IBS with tiered response",
+    "attacker": "A3 Policy-aware (no EIP-7702; max-size plain transfers every block)",
+    "lossUsd": 0,
+    "loss": {
+      "ETH": 0,
+      "USDT": 0,
+      "USDC": 0
+    },
+    "detectT": 0,
+    "containT": null,
+    "containments": 0,
+    "lossAtFirstContainUsd": null,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 6894,
+    "falseAlerts": 0,
+    "firstAlert": "signer:no-intent",
+    "benign": {
+      "requested": 1339,
+      "completed": 726,
+      "escalated": 1,
+      "blocked": 0,
+      "paused": 612
+    },
+    "signerDenials": {
+      "attacker:no-intent": 6894,
+      "pipeline:escalate-manual": 1
+    },
+    "log": [
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 1,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      },
+      {
+        "t": 1,
+        "kind": "signer:no-intent",
+        "who": "attacker"
+      }
+    ],
+    "runtimeSec": 12
+  },
+  {
+    "name": "R4t-A4",
+    "config": "R4t Full IBS with tiered response",
+    "attacker": "A4 Policy-aware + intent authority also compromised",
+    "lossUsd": 23975200,
+    "loss": {
+      "ETH": 10424,
+      "USDT": 0,
+      "USDC": 0
+    },
+    "detectT": 0,
+    "containT": 0,
+    "containments": 1,
+    "lossAtFirstContainUsd": 23975200,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 5,
+    "falseAlerts": 0,
+    "firstAlert": "signer:velocity",
+    "benign": {
+      "requested": 1339,
+      "completed": 114,
+      "escalated": 0,
+      "blocked": 613,
+      "paused": 612
+    },
+    "signerDenials": {
+      "attacker:velocity": 5,
+      "pipeline:frozen": 613,
+      "attacker:frozen": 5740
+    },
+    "log": [
+      [
+        0,
+        "containment: signer frozen, replenishment halted"
+      ],
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      },
+      {
+        "t": 0,
+        "kind": "signer:velocity",
+        "who": "attacker"
+      }
+    ],
+    "runtimeSec": 68
+  },
+  {
+    "name": "R4t-benign",
+    "config": "R4t Full IBS with tiered response",
+    "attacker": "none (benign only)",
+    "lossUsd": 0,
+    "loss": {
+      "ETH": 0,
+      "USDT": 0,
+      "USDC": 0
+    },
+    "detectT": null,
+    "containT": null,
+    "containments": 0,
+    "lossAtFirstContainUsd": null,
+    "delegatedBlocks": 0,
+    "alertsDuringAttack": 0,
+    "falseAlerts": 0,
+    "firstAlert": null,
+    "benign": {
+      "requested": 1339,
+      "completed": 726,
+      "escalated": 1,
+      "blocked": 0,
+      "paused": 612
+    },
+    "signerDenials": {
+      "pipeline:escalate-manual": 1
+    },
+    "log": [
+      [
+        570,
+        "manual: customer withdrawals paused"
+      ],
+      [
+        1149,
+        "manual: access cut, signer frozen"
+      ],
+      [
+        1150,
+        "eviction complete: operations resume"
+      ]
+    ],
+    "alerts": [],
+    "runtimeSec": 7
+  }
+]

@@ -1,0 +1,60 @@
+# DIDLab research network — chain 252701, Besu QBFT, 4 validators, Prague enabled.
+# Isolated from production (252501): own subnet, no discovery, RPC bound to localhost only.
+name: didlab-research
+
+x-besu: &besu
+  image: ${IMAGE}
+  user: ${UID_GID}
+  restart: unless-stopped
+  volumes:
+    - ./config:/config:ro
+  entrypoint: ["besu"]
+
+x-args: &args
+  - --genesis-file=/config/genesis.json
+  - --static-nodes-file=/config/static-nodes.json
+  - --data-path=/node/data
+  - --node-private-key-file=/node/key
+  - --discovery-enabled=false
+  - --p2p-port=30303
+  - --sync-mode=FULL
+  - --min-gas-price=0
+  - --rpc-http-enabled
+  - --rpc-http-host=0.0.0.0
+  - --rpc-http-api=ETH,NET,WEB3,QBFT,TXPOOL,DEBUG,TRACE
+  - --host-allowlist=*
+  - --metrics-enabled
+  - --metrics-host=0.0.0.0
+  - --logging=INFO
+
+services:
+  node1:
+    <<: *besu
+    command: *args
+    volumes: [./config:/config:ro, ./nodes/node1:/node]
+    networks: { research: { ipv4_address: "${SUBNET_PREFIX}.11" } }
+    ports:
+      - "127.0.0.1:18545:8545"   # JSON-RPC for experiments (localhost only)
+      - "127.0.0.1:19545:9545"   # Prometheus metrics (localhost only)
+  node2:
+    <<: *besu
+    command: *args
+    volumes: [./config:/config:ro, ./nodes/node2:/node]
+    networks: { research: { ipv4_address: "${SUBNET_PREFIX}.12" } }
+  node3:
+    <<: *besu
+    command: *args
+    volumes: [./config:/config:ro, ./nodes/node3:/node]
+    networks: { research: { ipv4_address: "${SUBNET_PREFIX}.13" } }
+  node4:
+    <<: *besu
+    command: *args
+    volumes: [./config:/config:ro, ./nodes/node4:/node]
+    networks: { research: { ipv4_address: "${SUBNET_PREFIX}.14" } }
+
+networks:
+  research:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: "${SUBNET_PREFIX}.0/24"

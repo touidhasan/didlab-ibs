@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "DIDLab IBS: testbed and research network for Intent-Bound Signing"
+version: 0.1.0
+date-released: 2026-10-31
+authors:
+  - family-names: Hasan
+    given-names: "T."
+    affiliation: "University of Missouri–Kansas City (DIDLab)"
+keywords: [blockchain, custody, EIP-7702, signing, Hyperledger Besu, QBFT]
