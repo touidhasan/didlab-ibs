@@ -1,0 +1,10 @@
+name,date,reason
+"Parity Multisig",2017-11-09,"S2: wallet library contract bug (uninitialized proxy) froze funds in self-custody contract wallets; no custodian or privileged signer abused (dataset technique: Uninitialized Proxy)"
+"Bitcoin Gold",2018-05-16,"S2: chain-level double-spend (dataset: Forged Proof); no custodian, bridge or privileged signer"
+"Furucombo",2021-02-27,"S2: contract bug (dataset: Delegatecall Hijack) in a DeFi protocol"
+"ValueDefi",2021-05-05,"S2: contract access-control bug in a DeFi protocol (dataset: Improper Access Control); recheck if evidence shows a privileged key was used"
+"Rari Capital",2021-05-08,"S2: contract bug (dataset: Arbitrary External Call)"
+"Mirror",2021-10-08,"S2: contract bug (dataset: Improper Access Control) in a DeFi protocol; recheck if evidence shows a privileged key was used"
+"Curio",2024-03-25,"S2: governance contract bug (dataset: Delegatecall Hijack)"
+"Cork V1",2025-05-28,"S2: contract bug (dataset: Improper Access Control) in a DeFi protocol"
+"Nesa",2026-08-24,"S2: contract arithmetic error (dataset: Token & Share Accounting / Arithmetic Error)"
