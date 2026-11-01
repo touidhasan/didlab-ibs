@@ -66,3 +66,13 @@ rm -rf nodes networkFiles config/genesis.json config/static-nodes.json .env
 
 The smoke script also runs in CI against a local Hardhat Prague node (`SKIP_SYSTEM_CONTRACTS=1`, because
 Hardhat does not preload the EIP-7002/7251 contracts). On Besu every check must pass with no skips.
+
+## Diagnostics
+
+`probe-null-reads.mjs` checks whether the node answers `eth_getBalance` with `null` right after a new block (limitation E13). Run it only when no campaign is active:
+
+```bash
+RPC=http://127.0.0.1:18545 MINUTES=60 node probe-null-reads.mjs > results/probe-$(date +%F-%H%M).jsonl
+```
+
+Each null is one JSON line (time, ms after the new block was seen, block, `latest` or explicit number); the last line is a summary.

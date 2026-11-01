@@ -120,6 +120,21 @@ No warnings or errors. Two observations, not yet a diagnosis:
   consistent with a state read at `latest` racing the head update.
 The other three failure windows are needed before calling either a cause.
 
+**Update (other three windows, ±1 min).** No block-propagation imports near the other failures, so the
+first observation was a coincidence. Instead, Besu's own transaction pool logged that *it* could not
+read an account balance at the current head (`SenderBalanceChecker | Failed to get balance for <addr>
+at chain header N`): twice about 30 s after the R1-A3 failure (04:22:37, 04:22:43, headers 13,852 and
+13,855) and once about 50 s after the R3-A1 failure (06:40:05, header 17,976). Nothing in the R0-A2
+window. One of the addresses (0x29dacf…) is a hot wallet from R0-A3, whose stuck transactions were still
+in the pool (E15). So the node itself intermittently fails to read state at the head; the null our
+client received is the same class of failure seen from the RPC side. It is not our client and not the
+JSON-RPC layer. Root cause inside Besu is still unknown. The node runs the LAYERED pool (confirmed from
+its start-up log), so the 200-per-sender default applies.
+
+Next diagnostic: `research-net/probe-null-reads.mjs` reads balances at `latest` and at the explicit block
+number immediately after every new block, independent of the simulator. Run it for an hour when no
+campaign is active; if it reproduces the nulls it is a minimal case for an upstream Besu report.
+
 ## Next
 
 1. On the VM: `git pull`, restart the four Besu nodes (clears the txpool; chain data is kept), then rerun
