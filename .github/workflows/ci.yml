@@ -31,5 +31,8 @@ jobs:
           RPC=http://127.0.0.1:8599 CHAIN_ID=31337 SKIP_SYSTEM_CONTRACTS=1 \
           FUNDER_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
           npm run smoke
+      - name: Dashboard end-to-end test
+        working-directory: dashboard
+        run: node test.mjs
       - name: Shell syntax
         run: bash -n research-net/setup.sh && bash -n infra/proxmox/provision-research-vm.sh

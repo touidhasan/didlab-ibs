@@ -1,0 +1,19 @@
+[Unit]
+Description=DIDLab IBS experiment dashboard (localhost only)
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+User=didlab
+WorkingDirectory=/opt/didlab-research/didlab-ibs/dashboard
+Environment=PORT=8090
+Environment=HOST=127.0.0.1
+Environment=RPC=http://127.0.0.1:18545
+Environment=CONCURRENCY=1
+ExecStart=/usr/bin/node server.mjs
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

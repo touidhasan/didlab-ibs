@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IBS experiment dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="viz-root">
+  <header class="top">
+    <div class="brand">
+      <strong>IBS experiments</strong>
+      <span class="muted" id="repo">…</span>
+    </div>
+    <div class="health" id="health" aria-live="polite">checking chain…</div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="campaigns" aria-selected="true">Campaigns</button>
+    <button role="tab" data-tab="runs">Runs</button>
+    <button role="tab" data-tab="compare">Compare</button>
+    <button role="tab" data-tab="detail" hidden id="tab-detail">Run</button>
+  </nav>
+
+  <main>
+    <!-- Campaigns -->
+    <section id="view-campaigns" class="view">
+      <div class="grid2">
+        <form id="new-campaign" class="card" autocomplete="off">
+          <h2>New campaign</h2>
+          <label>Name <input name="name" maxlength="120" placeholder="e.g. Besu full horizon, 5 seeds"></label>
+          <label>Note <textarea name="note" rows="2" maxlength="2000" placeholder="Purpose, hypothesis, anything a reader needs"></textarea></label>
+          <fieldset class="row">
+            <legend>Backend</legend>
+            <label class="inline"><input type="radio" name="backend" value="hardhat" checked> Hardhat (in-process)</label>
+            <label class="inline"><input type="radio" name="backend" value="rpc"> RPC chain</label>
+          </fieldset>
+          <label id="rpc-row" hidden>RPC URL <input name="rpc" placeholder="http://127.0.0.1:18545"></label>
+          <fieldset>
+            <legend>Runs <button type="button" class="link" data-sel="all">all</button> · <button type="button" class="link" data-sel="none">none</button> · <button type="button" class="link" data-sel="core">core 15</button></legend>
+            <div id="run-picker" class="picker"></div>
+          </fieldset>
+          <div class="row">
+            <label>Seeds <input name="seeds" value="7" pattern="[0-9, ]+" title="comma-separated integers"></label>
+            <label>Horizon (steps after t0) <input name="horizon" type="number" min="20" max="5000" value="1200"></label>
+            <label class="inline"><input type="checkbox" name="trace"> Per-step trace</label>
+          </div>
+          <p class="muted" id="estimate"></p>
+          <div class="row"><button type="submit" class="primary">Queue campaign</button><span id="form-msg" role="status"></span></div>
+        </form>
+        <div class="card">
+          <h2>Campaigns</h2>
+          <div id="campaign-list" class="list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Runs -->
+    <section id="view-runs" class="view" hidden>
+      <div class="card">
+        <div class="toolbar">
+          <label>Campaign <select id="run-filter"><option value="">All campaigns</option></select></label>
+          <label>Status <select id="status-filter"><option value="">Any</option><option>queued</option><option>running</option><option>done</option><option>failed</option><option>cancelled</option><option>interrupted</option></select></label>
+          <span class="spacer"></span>
+          <button id="compare-btn" disabled>Compare selected</button>
+          <a id="export-btn" class="button" href="api/export.csv">Export CSV</a>
+        </div>
+        <div class="table-wrap"><table id="runs-table"><thead></thead><tbody></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- Compare -->
+    <section id="view-compare" class="view" hidden>
+      <div class="card" id="compare-empty"><p>Select two or more finished runs in <b>Runs</b>, then choose <b>Compare selected</b>.</p></div>
+      <div id="compare-body" hidden>
+        <div id="compare-notice"></div>
+        <div class="card"><h2>Loss by run</h2><div id="loss-chart" class="chart"></div></div>
+        <div class="card"><h2>Attacker holdings over time (ETH)</h2><p class="muted" id="trace-note"></p><div id="trace-chart" class="chart"></div></div>
+        <div class="card"><h2>Side by side</h2><div class="table-wrap"><table id="compare-table"></table></div></div>
+      </div>
+    </section>
+
+    <!-- Run detail -->
+    <section id="view-detail" class="view" hidden>
+      <div class="card"><div class="toolbar"><h2 id="detail-title">Run</h2><span class="spacer"></span><button id="detail-cancel" hidden>Cancel run</button></div>
+        <div id="detail-tiles" class="tiles"></div></div>
+      <div class="grid2">
+        <div class="card"><h2>Outcome</h2><table id="detail-metrics" class="kv"></table></div>
+        <div class="card"><h2>Provenance</h2><table id="detail-prov" class="kv"></table></div>
+      </div>
+      <div class="card" id="detail-trace-card" hidden><h2>Balances over time (ETH)</h2><div id="detail-trace" class="chart"></div></div>
+      <div class="card"><h2>Event log</h2><table id="detail-events" class="kv"></table></div>
+      <div class="card"><h2>Process output</h2><pre id="detail-log" class="log"></pre></div>
+    </section>
+  </main>
+  <div id="tooltip" class="tooltip" role="tooltip" hidden></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

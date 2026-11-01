@@ -15,6 +15,9 @@ testbed/artifacts/
 *.log
 !testbed/results/**/*.log
 
+# dashboard run store (curate into testbed/results/<date>/ instead)
+runs/
+
 # editors / OS
 .DS_Store
 .vscode/

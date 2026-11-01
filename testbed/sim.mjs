@@ -371,7 +371,10 @@ async function run({ name, cfg, attacker, seed = 7 }) {
   let blitz = [];
 
   stepBlock = await pub.getBlockNumber();
+  const progressEvery = Number(process.env.PROGRESS || 0);
   for (tNow = -WARMUP; tNow <= HORIZON; tNow++) {
+    if (progressEvery && (tNow + WARMUP) % progressEvery === 0)
+      console.log(JSON.stringify({ progress: { run: name, step: tNow + WARMUP, of: HORIZON + WARMUP + 1, t: tNow } }));
     if (tNow === 0) Object.assign(clock, { t0Wall: Date.now(), t0Block: stepBlock });
     if (state.unfreezeAt === tNow && !state.attackerCut) { signer.frozen = false; state.replenishHalted = false; state.unfreezeAt = null; log.push([tNow, "recovery: signer unfrozen (attacker not yet evicted)"]); }
     if (tNow === MANUAL_REVOKE + 1) { signer.frozen = false; state.paused = false; state.replenishHalted = false; log.push([tNow, "eviction complete: operations resume"]); }
@@ -544,6 +547,15 @@ for (const a of ["A1", "A2", "A3", "A4", null]) plan.push(["R4t", a]);
 // E2 robustness: signer unfrozen 30 min after containment while the attacker keeps access.
 for (const c of ["R2", "R3", "R4"]) { CFG[c + "p"] = { ...CFG[c], label: CFG[c].label + " + early unfreeze (30 min)", recover: 150 }; for (const a of ["A1", "A3"]) plan.push([c + "p", a]); }
 plan.push(["R4p", "A4"]);
+if (only === "--list") {
+  console.log(JSON.stringify({
+    configs: Object.fromEntries(Object.entries(CFG).map(([k, v]) => [k, v.label])),
+    attackers: Object.fromEntries(Object.entries(ATK).map(([k, v]) => [k, v.label])),
+    runs: plan.map(([c, a]) => `${c}-${a || "benign"}`),
+    defaults: { horizon: HORIZON, warmup: WARMUP },
+  }));
+  process.exit(0);
+}
 const SEEDS = (process.env.SEEDS || "7").split(",").map(Number);
 const meta = { backend: BACKEND, chainId: CHAIN_ID, horizon: HORIZON, seeds: SEEDS, started: new Date().toISOString(),
   client: await pub.request({ method: "web3_clientVersion" }).catch(() => null), rpc: BACKEND === "rpc" ? RPC : null };
@@ -565,4 +577,7 @@ for (const [c, a] of plan) for (const seed of SEEDS) {
   console.log(`${id.padEnd(10)} s${seed} loss $${(res.lossUsd / 1e6).toFixed(1)}M  detect ${res.detectT} contain ${res.containT} delegated ${res.delegatedBlocks}b  benign ${JSON.stringify(res.benign)}${tm}  ${res.runtimeSec}s`);
 }
 const tag = [BACKEND === "rpc" ? "rpc" : null, only || null].filter(Boolean).join("-");
-fs.writeFileSync(new URL(`./results${tag ? "-" + tag : ""}.json`, import.meta.url), JSON.stringify({ meta, results }, null, 2));
+meta.finished = new Date().toISOString();
+const outPath = process.env.OUT || new URL(`./results${tag ? "-" + tag : ""}.json`, import.meta.url);
+fs.writeFileSync(outPath, JSON.stringify({ meta, results }, null, 2));
+process.exit(0);
