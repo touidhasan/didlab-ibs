@@ -35,3 +35,16 @@
 | 2026-10-31 | WebSearch | arXiv 2001.06909 wallet contracts on Ethereum | diangelo2021 |
 | 2026-10-31 | WebSearch | arXiv 2309.00448 account abstraction | wang2023aaanalysed |
 | 2026-10-31 | WebSearch | Frontiers in Blockchain 2025 cybersecurity crimes cryptocurrency exchanges 2009-2024 quantum threats review | olushola2025 |
+| 2026-10-31 | WebSearch | SoK threshold ECDSA MPC wallets survey security implementations | aumasson2020, verichains2023tsshock |
+| 2026-10-31 | WebSearch | user study hardware wallet transaction verification signers fail to verify address display paper | ivanov2021ethclipper; almutairi2019 (via its reference list) |
+| 2026-10-31 | WebSearch | Fluffy finding consensus bugs Ethereum multi-transaction differential fuzzing OSDI 2021 | yang2021fluffy |
+| 2026-10-31 | WebSearch | Ledger Connect Kit supply chain attack December 2023 postmortem drainer npm | slowmist2023ledgerconnect |
+| 2026-10-31 | WebFetch | blockaid.io transaction verification white paper | blockaid2024vtx |
+| 2026-10-31 | WebSearch | Almutairi Al-Megren Usability and security analysis of the KeepKey wallet ICBC 2019 | almutairi2019 abstract |
+| 2026-10-31 | WebSearch | EthClipper ... conference published | CNS 2021 via Crossref/OpenAlex |
+| 2026-10-31 | WebSearch | Forta Firewall pre-execution transaction screening | forta2024firewall |
+| 2026-10-31 | WebSearch | Zodiac Roles Modifier Safe permissions scoped allowlist treasury policy | gnosisguild2024roles |
+| 2026-10-31 | WebSearch | EBA RTS strong customer authentication dynamic linking Article 5 | eu2018rtssca |
+| 2026-10-31 | WebSearch | Provisions privacy-preserving proofs of solvency CCS 2015 | dagher2015provisions (DBLP) |
+| 2026-10-31 | WebSearch | Chainalysis 2026 crypto crime mid-year update stolen funds DPRK | secondary only; pending |
+| 2026-10-31 | WebSearch | safe-tx-hashes-util pcaversaccio | pcaversaccio2025safehashes |

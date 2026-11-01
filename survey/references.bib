@@ -30,6 +30,7 @@
   title        = {{SoK}: Security of Cross-chain Bridges: Attack Surfaces, Defenses, and Open Problems},
   howpublished = {arXiv preprint arXiv:2312.12573},
   year         = {2023},
+  doi          = {10.48550/arXiv.2312.12573},
   note         = {Peer-reviewed venue, if any, not yet confirmed}
 }
 
@@ -301,7 +302,8 @@
   booktitle = {Financial Cryptography and Data Security (FC 2013)},
   publisher = {Springer},
   year      = {2013},
-  note      = {Replication data: doi:10.7910/DVN/25545}
+  url       = {https://tylermoore.ens.utulsa.edu/fc13pres.pdf},
+  note      = {URL is the authors' FC 2013 slides; replication data doi:10.7910/DVN/25545}
 }
 
 @article{moore2018revisiting,
@@ -349,4 +351,114 @@
   year    = {2025},
   doi     = {10.3389/fbloc.2025.1713637},
   note    = {Author name order differs between the PDF (Akinlemi Olushola) and the Frontiers citation block (Olushola Akinlemi); check with the authors' ORCID before final citation}
+}
+
+@misc{aumasson2020tecdsa,
+  author       = {Jean-Philippe Aumasson and Adrian Hamelink and Omer Shlomovits},
+  title        = {A Survey of {ECDSA} Threshold Signing},
+  howpublished = {Cryptology ePrint Archive, Paper 2020/1390},
+  year         = {2020},
+  url          = {https://eprint.iacr.org/2020/1390}
+}
+
+@misc{verichains2023tsshock,
+  author       = {Duy Hieu Nguyen and Anh Khoa Nguyen and Huu Giap Nguyen and Thanh Nguyen and Anh Quynh Nguyen},
+  title        = {{TSSHOCK}: New Key Extraction Attacks on Threshold {ECDSA} Implementations},
+  howpublished = {Black Hat USA 2023 white paper},
+  year         = {2023},
+  url          = {https://i.blackhat.com/BH-US-23/Presentations/US-23-Nguyen-TSSHOCK-Breaking-MPC-Wallets-wp.pdf},
+  note         = {Grey literature (industry conference, not peer reviewed)}
+}
+
+@inproceedings{yang2021fluffy,
+  author    = {Youngseok Yang and Taesoo Kim and Byung-Gon Chun},
+  title     = {Finding Consensus Bugs in {Ethereum} via Multi-transaction Differential Fuzzing},
+  booktitle = {15th USENIX Symposium on Operating Systems Design and Implementation (OSDI 21)},
+  pages     = {349--365},
+  year      = {2021},
+  url       = {https://www.usenix.org/conference/osdi21/presentation/yang}
+}
+
+@inproceedings{ivanov2021ethclipper,
+  author    = {Nikolay Ivanov and Qiben Yan},
+  title     = {{EthClipper}: A Clipboard Meddling Attack on Hardware Wallets with Address Verification Evasion},
+  booktitle = {2021 IEEE Conference on Communications and Network Security (CNS)},
+  pages     = {191--199},
+  year      = {2021},
+  doi       = {10.1109/CNS53000.2021.9705033}
+}
+
+@inproceedings{almutairi2019keepkey,
+  author    = {Eman Almutairi and Shiroq Al-Megren},
+  title     = {Usability and Security Analysis of the {KeepKey} Wallet},
+  booktitle = {2019 IEEE International Conference on Blockchain and Cryptocurrency (ICBC)},
+  pages     = {149--153},
+  year      = {2019},
+  url       = {https://sindex.sdl.edu.sa/esploro/outputs/conferenceProceeding/Usability-and-Security-Analysis-of-the/9918717408331},
+  note      = {Title and abstract confirmed on the institutional record; venue and pages from the reference list of ivanov2021ethclipper; author first names to confirm}
+}
+
+@misc{blockaid2024vtx,
+  author       = {{Blockaid}},
+  title        = {Transaction Verification: A Solution to Blind Signing in Hardware Wallets},
+  howpublished = {Blockaid white paper (blog)},
+  year         = {2024},
+  month        = oct,
+  url          = {https://blockaid.io/blog/transaction-verification-a-solution-to-blind-signing-in-hardware-wallets},
+  note         = {Grey literature; proposal, not deployed at time of writing}
+}
+
+@misc{forta2024firewall,
+  author       = {{Forta Foundation}},
+  title        = {Forta Firewall documentation: transaction screening before execution},
+  howpublished = {Vendor documentation},
+  year         = {2024},
+  url          = {https://docs.forta.network/en/latest/forta-firewall-overview/},
+  note         = {Grey literature; detection rates are vendor claims}
+}
+
+@misc{gnosisguild2024roles,
+  author       = {{Gnosis Guild}},
+  title        = {Zodiac Roles Modifier v2},
+  howpublished = {Source code and documentation},
+  year         = {2024},
+  url          = {https://github.com/gnosisguild/zodiac-modifier-roles},
+  note         = {Grey literature. Deployed by DAO treasuries (e.g. ENS EP 5.12, Balancer BIP-667); year is approximate for v2}
+}
+
+@misc{slowmist2023ledgerconnect,
+  author       = {{SlowMist}},
+  title        = {Supply Chain Attack on {Ledger Connect Kit}: Analyzing the Impact and Preventive Measures},
+  howpublished = {SlowMist blog (Medium)},
+  year         = {2023},
+  month        = dec,
+  url          = {https://slowmist.medium.com/supply-chain-attack-on-ledger-connect-kit-analyzing-the-impact-and-preventive-measures-1005e39422fd},
+  note         = {Grey literature}
+}
+
+@misc{eu2018rtssca,
+  author       = {{European Commission}},
+  title        = {Commission Delegated Regulation ({EU}) 2018/389 supplementing Directive ({EU}) 2015/2366 with regard to regulatory technical standards for strong customer authentication and common and secure open standards of communication},
+  howpublished = {Official Journal of the European Union},
+  year         = {2018},
+  url          = {https://publications.europa.eu/resource/celex/32018R0389},
+  note         = {Article 5 (dynamic linking): authentication code specific to amount and payee; any change invalidates it. Wording checked via EBA Q\&A 2020\_5133}
+}
+
+@inproceedings{dagher2015provisions,
+  author    = {Gaby G. Dagher and Benedikt B{\"u}nz and Joseph Bonneau and Jeremy Clark and Dan Boneh},
+  title     = {Provisions: Privacy-preserving Proofs of Solvency for {Bitcoin} Exchanges},
+  booktitle = {Proceedings of the 22nd ACM SIGSAC Conference on Computer and Communications Security (CCS '15)},
+  pages     = {720--731},
+  year      = {2015},
+  doi       = {10.1145/2810103.2813674}
+}
+
+@misc{pcaversaccio2025safehashes,
+  author       = {{pcaversaccio}},
+  title        = {safe-tx-hashes-util: compute {Safe} transaction hashes for independent verification before signing},
+  howpublished = {GitHub repository},
+  year         = {2025},
+  url          = {https://github.com/pcaversaccio/safe-tx-hashes-util},
+  note         = {Grey literature. Recommended in Safe's own help center; OpenZeppelin Safe Utils UI built on it after WazirX, Radiant and Bybit. Year approximate}
 }

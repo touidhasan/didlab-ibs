@@ -59,3 +59,13 @@ Every reference is re-checked before any paper is submitted.
 | `ibs_relation` | Which IBS control (C1-C4) it relates to, and how (prior art, complement, competitor, evidence) |
 | `gap` | What it leaves open that matters for signing-path compromise |
 | `url` | Verification link |
+
+## Files
+
+| File | Content |
+|---|---|
+| `references.bib` | Verified references only |
+| `matrix.csv` | One extraction row per reference (fields above) |
+| `pending.md` | Found but not yet verified; not cited |
+| `search-log.md` | Every query, source and outcome, so the search can be repeated |
+| `gap-analysis.md` | Synthesis: what each layer of defense covers, partial prior art per IBS control, threats to validity |

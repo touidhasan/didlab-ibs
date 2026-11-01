@@ -12,3 +12,4 @@ Resolved items move to `references.bib`; see the git history of this file for wh
 | Moore and Christin FC 2013: LNCS volume and pages | Venue confirmed (FC 2013, Okinawa) from author slides and press | LNCS volume, pages, DOI |
 | di Angelo and Salzer earlier IEEE version | arXiv v2 says an earlier version is IEEE Xplore document 9223287 | Venue name and year |
 | XChainWatcher, Count of Monte Crypto: peer-reviewed venues | arXiv pages list no journal reference as of 2026-10-31 | Check DBLP before submission |
+| Chainalysis 2026 Crypto Crime Report (theft chapter) and 2025 mid-year update | Secondary coverage: $3.4B stolen in 2025, DPRK $2.02B, 76% of service compromises by value; mid-year: $2.17B from services by June 2025, Bybit ~69% | Primary pages (chainalysis.com blog); fetch needs approval |
