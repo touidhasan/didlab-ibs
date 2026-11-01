@@ -23,3 +23,6 @@ runs/
 .vscode/
 .idea/
 *.swp
+
+# Full-text papers: publisher/author copies, never committed (copyright). Notes live in survey/notes/.
+survey/papers/

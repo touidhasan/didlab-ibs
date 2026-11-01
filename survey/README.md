@@ -69,3 +69,5 @@ Every reference is re-checked before any paper is submitted.
 | `pending.md` | Found but not yet verified; not cited |
 | `search-log.md` | Every query, source and outcome, so the search can be repeated |
 | `gap-analysis.md` | Synthesis: what each layer of defense covers, partial prior art per IBS control, threats to validity |
+| `notes/` | Reading notes for papers read in full, with page references; see `notes/README.md` |
+| `papers/` | Local full-text PDFs, **git-ignored** (copyright); masters kept in the claude.ai Project and on the research VM |

@@ -1,4 +1,7 @@
-# Gap analysis: where Intent-Bound Signing sits (draft 1, 2026-10-31)
+# Gap analysis: where Intent-Bound Signing sits (draft 1.1, 2026-11-01)
+
+Draft 1.1 adds what six full-text readings showed (see `notes/`) and corrects one figure (HOUSTON's
+live run is 20 days plus a 3-week rerun, not 40 days).
 
 Built from the 50 verified items in `matrix.csv` (21 peer-reviewed papers, 12 preprints, 6 standards,
 11 grey-literature items). The search is not finished (see "Threats to validity"), so every "no prior work"
@@ -44,6 +47,8 @@ matched its signature until after the attack.
 **O2. Independent intent appears only in partial forms.** Six items do part of what C1 does:
 
 - liu2024montecrypto: the source-chain deposit is an independent record, but only bridges have one.
+  Its report-then-execute design (a reporter must vouch before the bridge executes) is the closest
+  architecture to C1 that we found.
 - eu2018rtssca (PSD2 dynamic linking): the authorization is tied to amount and payee, but the reference is
   what the payer was shown.
 - blockaid2024vtx: a second party attests the request before signing, but it attests risk, not intent.
@@ -59,11 +64,22 @@ ERC-7265, Monte Crypto, Zodiac's delay module and Bitcoin covenant vaults all de
 outflows. The two closest to custody are covenant vaults (moeser2016covenants: a public delay plus a
 recovery key, but it needs a Bitcoin consensus change and delays every spend) and the Monte Crypto
 balance invariant (bridges only). We found no item that reconciles a custodian's landed withdrawals
-against an intent ledger and then contains automatically.
+against an intent ledger and then contains automatically. The full texts sharpen this:
+
+- Monte Crypto explicitly puts out of scope attacks that move funds straight from a wallet with a
+  compromised key (no withdrawal step), which is the custodial case (notes/liu2024montecrypto.md).
+- HOUSTON drops plain ETH transfers and standard token calls before modelling, and a custodial drain
+  consists of exactly those (notes/meng2026houston.md).
+- The wallet SoK lists 29 defence methods, of which only one is a response method
+  (notes/erinle2025sokwallets.md).
+- Where a response window exists, people rarely use it: 87 of 183 DeFi victims had a pause, 51 used it
+  within 48 hours and one within an hour (notes/zhou2023sokdefi.md). That is the case for *autonomous*
+  containment.
 
 **O4. Evaluations seldom run on a real client, and none compares execution backends.** Most items are
-incident analyses or replays. HOUSTON reports a 40-day live deployment; Monte Crypto a modified-Wormhole
-prototype. DETER, mpfuzz and Fluffy run real clients, but study denial of service or consensus bugs, not
+incident analyses or replays. HOUSTON reports a 20-day live run on 20 protocols plus a 3-week rerun;
+Monte Crypto a 10-month live audit of Wormhole and a report-then-execute prototype on testnets.
+DETER, mpfuzz and Fluffy run real clients, but study denial of service or consensus bugs, not
 loss. No surveyed defense reports results on two backends. Our Hardhat vs Besu difference (limitation E8:
 Besu queued underfunded withdrawals and released them later) is therefore a methodological point in its
 own right; wang2024mpfuzz and li2021deter are the closest prior work.
@@ -76,7 +92,7 @@ None addresses a custodian whose orchestration asks its signer for a delegation 
 
 | Control | Closest prior art | What is different in IBS | What our papers must show |
 |---|---|---|---|
-| C1 intent binding | eu2018rtssca, erc7730 (its "future work" proposes binding frontends to verified manifests), blockaid2024vtx, pcaversaccio2025safehashes | Intent comes from a separate trust domain and is compared by machine, before signing | Catches request manipulation that passes display checks; false-reject rate on benign traffic |
+| C1 intent binding | liu2024montecrypto (report-then-execute), eu2018rtssca, erc7730 (its "future work" proposes binding frontends to verified manifests), blockaid2024vtx, pcaversaccio2025safehashes | Intent comes from a separate trust domain and is compared by machine, before signing | Catches request manipulation that passes display checks; false-reject rate on benign traffic |
 | C2 deny-by-default semantic policy | gnosisguild2024roles, erc7579 hooks, bellare2014pbs, badertscher2021pcs, CCSS aspect 1.05 | Policy at the signer over decoded semantics, including 7702 authorizations, delegatecall and upgrades | Blocks delegation and upgrade classes (A3, Bybit-type) at low benign cost; policy-update path protected |
 | C3 exposure budgets | erc7265, moeser2016covenants, wallet daily limits (diangelo2021walletcontracts), Zodiac allowances | Budget enforced at the custodian's signer per asset and time window, independent of any protocol | Bounded loss versus throughput cost |
 | C4 watcher and containment | meng2026houston, forta2024firewall, augusto2024xchainwatcher, liu2024montecrypto, dagher2015provisions | Reconciles landed transfers with the intent ledger in real time and contains automatically (freeze signer, revoke delegation) | Detection and containment time on a real client (Besu runs so far: R2 2.03 s; R3 alert 0.10 s, contain 2.05 s) and the loss bound that follows |
