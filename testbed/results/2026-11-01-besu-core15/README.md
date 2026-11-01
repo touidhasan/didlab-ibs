@@ -104,13 +104,26 @@ overruns, never more than one block per step.
 
 - Customer withdrawals rejected at submission now record the client's error message
   (`benignLanded.rejectReasons`). On Besu, R0-A3 had 280 such rejections late in the run, while the
-  wallet was stalled. We suspect a per-sender mempool limit but have not confirmed it; the next runs
-  will show the reason.
+  wallet was stalled. This fits Besu's layered pool, which by default keeps at most 200 sequential
+  transactions per sender (`--tx-pool-max-future-by-sender`); the next runs will show the actual reason.
+- Each rpc run now records the client's txpool size at start and end (`timing.txpool`). Stuck
+  transactions from earlier runs stay in Besu's layered pool, which drops old transactions only when its
+  memory limit is reached, so later runs start with a non-empty pool (limitation E15). The node log
+  showed 438–452 pending transactions during R0-A1; the dashboard showed 988 after the campaign.
+
+## Besu log around the R0-A1 failure (01:49Z)
+
+No warnings or errors. Two observations, not yet a diagnosis:
+- Block 9,261 (01:49:35) was imported by the block-propagation path (`PersistBlockTask`) instead of
+  the QBFT processor, the only such import in that minute.
+- The process exited at 01:49:39.015, 2 ms after node1 logged the import of block 9,263. That is
+  consistent with a state read at `latest` racing the head update.
+The other three failure windows are needed before calling either a cause.
 
 ## Next
 
-1. On the VM: `git pull`, then rerun the five failed runs (R0-A1, R0-A2, R1-A3, R3-A1, R3-A2) as a new
-   campaign with the same settings.
+1. On the VM: `git pull`, restart the four Besu nodes (clears the txpool; chain data is kept), then rerun
+   the five failed runs (R0-A1, R0-A2, R1-A3, R3-A1, R3-A2) as a new campaign with the same settings.
 2. Hardhat multi-seed campaign (seeds 7–11, horizon 1,200, trace on).
 3. Add attacker variant A3r, which replaces a stalled nonce, so the baseline no longer depends on the
    attacker missing the stall. Report R0 as a range until then.

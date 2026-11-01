@@ -280,6 +280,10 @@ async function run({ name, cfg, attacker, seed = 7 }) {
   const state = { alerts: [], detect: null, contain: null, contains: [], paused: false, replenishHalted: false, attackerCut: false, pendingContain: false, unfreezeAt: null, lossAtContain: null };
   let tNow = -WARMUP;
   const clock = { t0Wall: null, t0Block: null };
+  // Client txpool size at start and end (rpc only). Stuck transactions from earlier runs stay in Besu's
+  // pool across runs (limitation E15), so record it for every run.
+  const poolStats = async () => BACKEND === "rpc" ? await pub.request({ method: "txpool_besuStatistics" }).catch(() => null) : null;
+  const poolAtStart = await poolStats();
   const stamp = async () => ({ wall: Date.now(), block: await pub.getBlockNumber() });
   const alert = (kind, who) => {
     state.alerts.push({ t: tNow, kind, who });
@@ -541,6 +545,7 @@ async function run({ name, cfg, attacker, seed = 7 }) {
       containSecAfterT0: state.containAt && clock.t0Wall ? (state.containAt.wall - clock.t0Wall) / 1000 : null,
       steps: { ...stepStats },
       rpc: JSON.parse(JSON.stringify(rpcStats)),
+      txpool: { atStart: poolAtStart, atEnd: await poolStats() },
     } : undefined,
   };
 }

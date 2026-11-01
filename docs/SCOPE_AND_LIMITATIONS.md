@@ -45,6 +45,7 @@ Status values: **Open** (applies to current results), **Mitigated** (reduced, st
 | E12 | Running several rpc campaigns at once on one chain shares block space and CPU and can change timing results. The dashboard runs one at a time by default and records, per run, how many runs were active when it started. | Open |
 | E13 | Besu 26.8.0 occasionally answered `eth_getBalance` at `latest` with `null` (4 times in about 8 h of 2 s blocks), which stopped four runs on 2026-11-01. Cause not established. Since then the rpc backend retries such reads with backoff and reports every occurrence per run (`timing.rpc`); a CI test injects nulls to keep this path working. | Mitigated |
 | E14 | Runs can fail for infrastructure reasons (E13; one Node.js V8 crash at start-up on 2026-11-01). A failed run is rerun with identical parameters and both attempts are reported; failed runs are never dropped silently, because dropping them could bias which outcomes are reported. | Open |
+| E15 | Transactions that never become payable (E8) stay in Besu's txpool after their run ends; the layered pool drops old transactions only when its memory limit is reached. Later runs therefore start with a non-empty pool (988 transactions after the 2026-11-01 campaign). Runs use fresh accounts, so nonces do not collide, but pool limits are shared. Mitigation: restart the nodes before each campaign, and every run records the pool size at start and end (`timing.txpool`). | Mitigated |
 
 ## 4. Process disclosures
 
