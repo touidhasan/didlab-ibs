@@ -20,6 +20,13 @@ jobs:
           (MINING_INTERVAL=250 npx hardhat --config hardhat.rpc-test.config.js node --port 8598 > /tmp/hhrpc.log 2>&1 &)
           for i in $(seq 1 30); do curl -s -o /dev/null http://127.0.0.1:8598 && break; sleep 1; done
           BACKEND=rpc RPC=http://127.0.0.1:8598 HORIZON=40 node sim.mjs =R4-A1
+      - name: rpc backend survives null state reads (limitation E13)
+        working-directory: testbed
+        run: |
+          (node tools/nullproxy.mjs 8597 http://127.0.0.1:8598 7 > /tmp/nullproxy.log 2>&1 &)
+          sleep 1
+          BACKEND=rpc RPC=http://127.0.0.1:8597 HORIZON=40 TRACE=1 OUT=/tmp/nulls.json node sim.mjs =R4-A1
+          node -e 'const r=require("/tmp/nulls.json").results[0]; const s=r.timing.rpc; console.log(s); if(!(s.nullReads>0 && s.recovered===s.nullReads)) process.exit(1)'
       - name: Install research-net smoke test
         working-directory: research-net
         run: npm ci

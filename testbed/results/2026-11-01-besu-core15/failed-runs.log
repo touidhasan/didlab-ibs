@@ -1,0 +1,97 @@
+== R0-A1
+backend=rpc chain=252701 client=besu/v26.8.0/linux-x86_64/openjdk-java-25 horizon=1200 seeds=7
+file:///opt/didlab-research/didlab-ibs/testbed/node_modules/viem/_esm/actions/public/getBalance.js:75
+    return BigInt(balance);
+           ^
+
+TypeError: Cannot convert null to a BigInt
+    at BigInt (<anonymous>)
+    at getBalance (file:///opt/didlab-research/didlab-ibs/testbed/node_modules/viem/_esm/actions/public/getBalance.js:75:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async run (file:///opt/didlab-research/didlab-ibs/testbed/sim.mjs:446:16)
+    at async file:///opt/didlab-research/didlab-ibs/testbed/sim.mjs:573:15
+
+Node.js v22.23.4
+== R0-A2
+backend=rpc chain=252701 client=besu/v26.8.0/linux-x86_64/openjdk-java-25 horizon=1200 seeds=7
+file:///opt/didlab-research/didlab-ibs/testbed/node_modules/viem/_esm/actions/public/getBalance.js:75
+    return BigInt(balance);
+           ^
+
+TypeError: Cannot convert null to a BigInt
+    at BigInt (<anonymous>)
+    at getBalance (file:///opt/didlab-research/didlab-ibs/testbed/node_modules/viem/_esm/actions/public/getBalance.js:75:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async run (file:///opt/didlab-research/didlab-ibs/testbed/sim.mjs:446:16)
+    at async file:///opt/didlab-research/didlab-ibs/testbed/sim.mjs:573:15
+
+Node.js v22.23.4
+== R1-A3
+backend=rpc chain=252701 client=besu/v26.8.0/linux-x86_64/openjdk-java-25 horizon=1200 seeds=7
+file:///opt/didlab-research/didlab-ibs/testbed/node_modules/viem/_esm/actions/public/getBalance.js:75
+    return BigInt(balance);
+           ^
+
+TypeError: Cannot convert null to a BigInt
+    at BigInt (<anonymous>)
+    at getBalance (file:///opt/didlab-research/didlab-ibs/testbed/node_modules/viem/_esm/actions/public/getBalance.js:75:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async run (file:///opt/didlab-research/didlab-ibs/testbed/sim.mjs:446:16)
+    at async file:///opt/didlab-research/didlab-ibs/testbed/sim.mjs:573:15
+
+Node.js v22.23.4
+== R3-A1
+backend=rpc chain=252701 client=besu/v26.8.0/linux-x86_64/openjdk-java-25 horizon=1200 seeds=7
+file:///opt/didlab-research/didlab-ibs/testbed/node_modules/viem/_esm/actions/public/getBalance.js:75
+    return BigInt(balance);
+           ^
+
+TypeError: Cannot convert null to a BigInt
+    at BigInt (<anonymous>)
+    at getBalance (file:///opt/didlab-research/didlab-ibs/testbed/node_modules/viem/_esm/actions/public/getBalance.js:75:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async run (file:///opt/didlab-research/didlab-ibs/testbed/sim.mjs:446:16)
+    at async file:///opt/didlab-research/didlab-ibs/testbed/sim.mjs:573:15
+
+Node.js v22.23.4
+== R3-A2
+
+
+#
+# Fatal error in , line 0
+# Check failed: name.IsUniqueName().
+#
+#
+#
+#FailureMessage Object: 0x7587a59fc0d0
+----- Native stack trace -----
+
+
+
+#
+# Fatal error in , line 0
+# Check failed: IsHeapObject().
+#
+#
+#
+#FailureMessage Object: 0x75879fffd8b0
+----- Native stack trace -----
+
+
+
+#
+# Fatal error in , line 0
+# Check failed: IsHeapObject().
+#
+#
+#
+#FailureMessage Object: 0x7587a51fb580
+----- Native stack trace -----
+
+
+
+#
+# Fatal error in , line 0
+# Check failed: IsHeapObject().
+#
+#

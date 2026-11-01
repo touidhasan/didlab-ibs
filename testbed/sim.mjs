@@ -21,12 +21,31 @@ const BACKEND = process.env.BACKEND || "hardhat";
 if (!["hardhat", "rpc"].includes(BACKEND)) { console.error(`BACKEND must be hardhat or rpc, got ${BACKEND}`); process.exit(2); }
 const RPC = process.env.RPC || "http://127.0.0.1:18545";
 let transport, chain, test = null;
+// State reads that the JSON-RPC spec never answers with null. Besu 26.8.0 did so a few times in
+// ~10 h of 2 s blocks (eth_getBalance at "latest"), which killed whole runs (limitation E13).
+// Retry those with backoff and count every occurrence so it is reported, not hidden.
+const NEVER_NULL = new Set(["eth_getBalance", "eth_getTransactionCount", "eth_getCode", "eth_call", "eth_getStorageAt", "eth_blockNumber", "eth_chainId"]);
+const rpcStats = { nullReads: 0, recovered: 0, nullByMethod: {} };
+function nullRetry(factory, tries = 8) {
+  return opts => {
+    const t = factory(opts);
+    return { ...t, request: async args => {
+      for (let i = 0; ; i++) {
+        const r = await t.request(args);
+        if ((r !== null && r !== undefined) || !NEVER_NULL.has(args.method)) { if (i) rpcStats.recovered++; return r; }
+        rpcStats.nullReads++; rpcStats.nullByMethod[args.method] = (rpcStats.nullByMethod[args.method] || 0) + 1;
+        if (i + 1 >= tries) throw new Error(`${args.method} returned null ${tries} times; params ${JSON.stringify(args.params)}`);
+        await new Promise(res => setTimeout(res, 50 * 2 ** i));
+      }
+    } };
+  };
+}
 if (BACKEND === "hardhat") {
   const hre = (await import("hardhat")).default;
   transport = custom(hre.network.provider);
   chain = hardhat;
 } else {
-  transport = http(RPC, { timeout: 30_000 });
+  transport = nullRetry(http(RPC, { timeout: 30_000 }));
   const id = await createPublicClient({ transport }).getChainId();
   chain = defineChain({ id, name: `rpc-${id}`, nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 }, rpcUrls: { default: { http: [RPC] } } });
 }
@@ -240,8 +259,9 @@ class Signer {
   }
 }
 
+let lastSendError = null;
 const send = async (raw, from, nonce) => {
-  const h = await pub.request({ method: "eth_sendRawTransaction", params: [raw] }).catch(() => null);
+  const h = await pub.request({ method: "eth_sendRawTransaction", params: [raw] }).catch(e => { lastSendError = e?.details || e?.shortMessage || String(e?.message || e); return null; });
   if (h && from !== undefined) noteNonce(from, nonce);
   return h;
 };
@@ -315,7 +335,7 @@ async function run({ name, cfg, attacker, seed = 7 }) {
     const req = asset === "ETH" ? { kind: "tx", wallet: w, to, value: amount, data: "0x", nonce, gas: 50_000n, intent }
       : { kind: "tx", wallet: w, to: W.usdt, value: 0n, data: encodeFunctionData({ abi: TRANSFER_ABI, functionName: "transfer", args: [to, amount] }), nonce, gas: 100_000n, intent };
     const res = await signer.request(req, { role: "service", who: "pipeline", block: tNow });
-    if (res.ok) { const h = await send(res.raw, w, nonce); benign.completed++; benignTx.push([h, tNow, w, asset, amount]); }
+    if (res.ok) { const h = await send(res.raw, w, nonce); benign.completed++; benignTx.push([h, tNow, w, asset, amount, h ? null : lastSendError]); }
     else if (res.reason === "escalate-manual") benign.escalated++;
     else benign.blocked++;
   }
@@ -490,9 +510,13 @@ async function run({ name, cfg, attacker, seed = 7 }) {
   await waitBlocks(2);
   const hubEnd = await bal(K.hub.address);
   // Benign withdrawals that actually landed: "completed" counts signed-and-sent; on a real chain some may fail or never be mined.
-  const landed = { success: 0, reverted: 0, missing: 0, rejectedAtSend: 0, failedList: [] };
-  for (const [h, t, w, asset, amount] of benignTx) {
-    if (!h) { landed.rejectedAtSend++; landed.failedList.push({ t, w, asset, amount: amount.toString(), why: "rejected-at-send" }); continue; }
+  const landed = { success: 0, reverted: 0, missing: 0, rejectedAtSend: 0, rejectReasons: {}, failedList: [] };
+  for (const [h, t, w, asset, amount, reason] of benignTx) {
+    if (!h) {
+      landed.rejectedAtSend++; const why = String(reason || "unknown").slice(0, 160);
+      landed.rejectReasons[why] = (landed.rejectReasons[why] || 0) + 1;
+      landed.failedList.push({ t, w, asset, amount: amount.toString(), why: "rejected-at-send", reason: why }); continue;
+    }
     const rc = await pub.getTransactionReceipt({ hash: h }).catch(() => null);
     if (!rc) { landed.missing++; landed.failedList.push({ t, w, asset, amount: amount.toString(), why: "missing" }); }
     else if (rc.status === "success") landed.success++;
@@ -516,6 +540,7 @@ async function run({ name, cfg, attacker, seed = 7 }) {
       containBlocksAfterT0: state.containAt && clock.t0Block !== null ? Number(state.containAt.block - clock.t0Block) : null,
       containSecAfterT0: state.containAt && clock.t0Wall ? (state.containAt.wall - clock.t0Wall) / 1000 : null,
       steps: { ...stepStats },
+      rpc: JSON.parse(JSON.stringify(rpcStats)),
     } : undefined,
   };
 }
@@ -568,7 +593,7 @@ for (const [c, a] of plan) for (const seed of SEEDS) {
   if (only && !only.startsWith("=") && !id.startsWith(only)) continue;
   nextNonce.clear();
   if (BACKEND === "hardhat") { await test.revert({ id: snap }); snap = await test.snapshot(); }
-  else { Object.assign(stepStats, { steps: 0, overruns: 0, maxBlocksPerStep: 0 }); await setupRpc(`${id}-s${seed}-${Date.now()}`); }
+  else { Object.assign(stepStats, { steps: 0, overruns: 0, maxBlocksPerStep: 0 }); Object.assign(rpcStats, { nullReads: 0, recovered: 0, nullByMethod: {} }); await setupRpc(`${id}-s${seed}-${Date.now()}`); }
   const t = Date.now();
   const res = await run({ name: id, cfg: CFG[c], attacker: a ? ATK[a] : null, seed });
   res.seed = seed; res.runtimeSec = Math.round((Date.now() - t) / 1000);
