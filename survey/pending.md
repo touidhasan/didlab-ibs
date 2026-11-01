@@ -1,18 +1,14 @@
 # Found but not yet verified
 
 Not cited until every bibliographic field is confirmed against a primary page.
+Resolved items move to `references.bib`; see the git history of this file for what was resolved when.
 
 | Item | What is known | Missing |
 |---|---|---|
-| DelegProof: A Machine-Checked Security Analysis of EIP-7702 Delegation | IACR ePrint 2026/2060 (PDF seen) | Authors, date |
-| SoK: A Review of Cross-Chain Bridge Hacks in 2023 | arXiv:2501.03423; Quantstamp authors incl. Belenkov, Callens, Murashkin, Bak | Full author list |
-| SoK: Not Quite Water Under the Bridge: Review of Cross-Chain Bridge Hacks | Lee, Murashkin, Derka, Gorzny, IEEE ICBC 2023 (seen only in a reference list) | Primary page |
-| Beware the Middleman: Empirical Analysis of Bitcoin-Exchange Risk | Moore and Christin, FC 2013 (known from secondary citation) | Primary page |
-| Revisiting the Risks of Bitcoin Currency Exchange Closure | Moore, Christin, Szurdi 2018 (secondary citation) | Title, venue |
-| Cybersecurity Crimes in Cryptocurrency Exchanges (2009-2024) and Emerging Quantum Threats | Frontiers in Blockchain review, accepted Nov 2025 | Authors |
-| Transaction-simulation phishing / SimGuard | arXiv preprint (July 30, 2026), 4,224 contracts, 5,742 victims (per CryptoSlate; not peer reviewed; internal inconsistencies reported) | Title, authors, arXiv id |
-| ERC-7730 (clear signing metadata) | Implemented by Ledger, Trezor, Ambire, Gemini, WalletChan (Trezor docs) | EIP page, authors, status |
-| Wallet Contracts on Ethereum: Identification, Types, Usage, and Profiles | arXiv:2001.06909 | Authors, venue |
-| FrontDef: front-running defense against DeFi attacks | University of Toronto (Veneris, Long et al.), DAPPS 2023 per file name | Full authors, venue |
-| XChainWatcher; Count of Monte Crypto (bridge monitoring and accounting defenses) | Seen in related-paper lists | Everything |
-| Account-abstraction security survey | arXiv:2309.00448 | Title, authors |
+| FrontDef: front-running defense against DeFi attacks | University of Toronto (Veneris, Long et al.), DAPPS 2023 per file name | Title, authors, venue |
+| CCSS v9.0 requirement text for 1.05.8 Spend Verification and 1.05.9 Multi-Signer Mechanism Usage | Control titles confirmed from the C4 peer-review template (docx, not machine-readable here) | Requirement text per level; needs the CCSS v9.0 matrix page or the user's copy |
+| Zellic audit finding on an ERC-7265 implementation ("CircuitBreaker complexity introduces unnecessary attack surfaces") | reports.zellic.io, Yeet audit; describes griefing by triggering the breaker | Report date, client, whether the finding applies to the reference implementation |
+| Bascule drawbridge (Lombard) | Count of Monte Crypto v3 says the paper inspired it | Primary Lombard/Bascule documentation |
+| Moore and Christin FC 2013: LNCS volume and pages | Venue confirmed (FC 2013, Okinawa) from author slides and press | LNCS volume, pages, DOI |
+| di Angelo and Salzer earlier IEEE version | arXiv v2 says an earlier version is IEEE Xplore document 9223287 | Venue name and year |
+| XChainWatcher, Count of Monte Crypto: peer-reviewed venues | arXiv pages list no journal reference as of 2026-10-31 | Check DBLP before submission |
