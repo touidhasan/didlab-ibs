@@ -4,7 +4,7 @@
 // minimal reproduction for an upstream report.
 //
 // Usage (run when no campaign is active, to keep campaign timing clean):
-//   RPC=http://127.0.0.1:18545 MINUTES=60 node probe-null-reads.mjs > probe-$(date +%F-%H%M).jsonl
+//   RPC=http://127.0.0.1:18545 MINUTES=60 node probe-null-reads.mjs > ~/probe-$(date +%F-%H%M).jsonl
 // Optional: ADDRS=0xabc...,0xdef...   POLL_MS=20
 const RPC = process.env.RPC || "http://127.0.0.1:18545";
 const MINUTES = Number(process.env.MINUTES || 60);

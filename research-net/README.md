@@ -72,7 +72,7 @@ Hardhat does not preload the EIP-7002/7251 contracts). On Besu every check must 
 `probe-null-reads.mjs` checks whether the node answers `eth_getBalance` with `null` right after a new block (limitation E13). Run it only when no campaign is active:
 
 ```bash
-RPC=http://127.0.0.1:18545 MINUTES=60 node probe-null-reads.mjs > results/probe-$(date +%F-%H%M).jsonl
+RPC=http://127.0.0.1:18545 MINUTES=60 node probe-null-reads.mjs > ~/probe-$(date +%F-%H%M).jsonl
 ```
 
 Each null is one JSON line (time, ms after the new block was seen, block, `latest` or explicit number); the last line is a summary.
