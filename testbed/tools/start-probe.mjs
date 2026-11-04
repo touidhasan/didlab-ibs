@@ -10,7 +10,8 @@
 //   sim      node sim.mjs --list with BACKEND=hardhat the simulator's own start-up, as the dashboard runs it
 // The crashes so far (SIGSEGV; SIGABRT after "free(): invalid pointer"; a V8 fatal check) point at native memory
 // corruption during start-up. Which kinds crash says where: solc and sim -> WebAssembly start-up; hardhat and sim ->
-// Hardhat/EDR; bare too -> Node itself or the host.
+// Hardhat/EDR; bare too -> Node itself or the host. Run it on two machines: crashes on only one point at that
+// machine (on another machine, 1,500 starts gave 0 crashes; testbed/results/2026-11-04-hardhat-10seeds/).
 //
 // Usage, from testbed/:  N=300 OUT=$HOME/start-probe.jsonl node tools/start-probe.mjs
 // One JSON line per start goes to OUT (keep it outside the repo); the summary line is printed and appended last.

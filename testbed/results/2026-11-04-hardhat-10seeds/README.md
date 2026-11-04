@@ -117,3 +117,14 @@ Across both batches, 4 of 165 Hardhat run starts crashed. All 4 crashed within 0
 - **The kernel log has no entry for the crashes.**
 - **Where the corruption happens is not yet known.** One candidate loads on both backends: `sim.mjs` imports solc-js, a large WebAssembly module, at start-up. `tools/start-probe.mjs` separates Node, viem, solc-js, Hardhat and the full simulator start.
 - **Retries are now automatic.** Since this change, the dashboard retries a start-up crash up to twice and keeps every attempt on record (`dashboard/test-retry.mjs`).
+
+## Host CPU and cross-machine checks (added 2026-11-04)
+
+- **The research VM's host CPU is an Intel Core i9-13900K.** It reports microcode 0x132 inside the VM.
+  - Intel has acknowledged a "Vmin shift" instability in 13th- and 14th-generation desktop processors, including i9 K models. Its microcode updates prevent further degradation but do not repair processors that are already affected; Intel replaces those under an extended warranty.
+  - Random native crashes like ours are the reported symptom. Whether this particular CPU is degraded is **not established**.
+- **The same start-ups don't crash on another machine.** That machine ran an Intel Xeon with the same Node v22.23.4, the same code and the same dependency versions (`start-probe-other-machine.jsonl.gz`).
+  - It made 1,500 starts: 300 each of Node alone, viem, solc-js, Hardhat and the full simulator start. None crashed.
+  - At the VM's rate (4 in 165), the 300 simulator starts alone would be expected to crash about 7 times. The probability of no crash at that rate is (1 − 4/165)³⁰⁰ ≈ 0.0006.
+- **Completed results don't depend on the VM.** All 30 cells at seeds 7 and 12 were replayed on that machine with `tools/replay-check.mjs`. Every one is identical to the VM's recording, per-step traces included (`replay-check-other-machine.log`).
+- **Pending.** The same probe on the VM.
