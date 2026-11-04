@@ -14,6 +14,7 @@
 // machine (on another machine, 1,500 starts gave 0 crashes; testbed/results/2026-11-04-hardhat-10seeds/).
 //
 // Usage, from testbed/:  N=300 OUT=$HOME/start-probe.jsonl node tools/start-probe.mjs
+// KINDS=sim,hardhat runs only the named kinds (default: all five).
 // One JSON line per start goes to OUT (keep it outside the repo); the summary line is printed and appended last.
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -31,6 +32,8 @@ const kinds = {
   hardhat: ["--input-type=module", "-e", "const hre = (await import('hardhat')).default; await hre.network.provider.request({ method: 'eth_chainId' });"],
   sim: ["sim.mjs", "--list"],
 };
+if (process.env.KINDS) { const keep = process.env.KINDS.split(","); for (const k of Object.keys(kinds)) if (!keep.includes(k)) delete kinds[k]; }
+if (!Object.keys(kinds).length) { console.error("KINDS selects none of: bare, viem, solc, hardhat, sim"); process.exit(2); }
 const stats = Object.fromEntries(Object.keys(kinds).map(k => [k, { starts: 0, signals: {}, nonzeroExits: 0, ms: [] }]));
 const write = o => fs.appendFileSync(OUT, JSON.stringify(o) + "\n");
 console.log(`start-probe: ${N} rounds x ${Object.keys(kinds).length} kinds, node ${process.version}, host ${os.hostname()}, writing ${OUT}`);
