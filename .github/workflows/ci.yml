@@ -41,5 +41,8 @@ jobs:
       - name: Dashboard end-to-end test
         working-directory: dashboard
         run: node test.mjs
+      - name: Dashboard retries start-up crashes and keeps every attempt (limitation E14)
+        working-directory: dashboard
+        run: node test-retry.mjs
       - name: Shell syntax
         run: bash -n research-net/setup.sh && bash -n infra/proxmox/provision-research-vm.sh

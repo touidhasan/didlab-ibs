@@ -294,7 +294,7 @@ will test whether any attacker exceeds them; by T3 none should.
 
 ## 12. Next steps (in order)
 
-1. ~~Finish the Hardhat multi-seed campaign; report seed variance (closes E5).~~ Done 2026-11-04: the seed changes no outcome (`testbed/results/2026-11-04-hardhat-5seeds/`). Next, extend Hardhat to 10 seeds (seeds 12–16).
+1. ~~Finish the Hardhat multi-seed campaign; report seed variance (closes E5).~~ Done 2026-11-04 at 10 seeds: the seed changes no outcome, and every configuration contrast is either significant (p ≈ 0.002) or identical at every seed (`testbed/results/2026-11-04-hardhat-10seeds/`). Start-up crashes are retried automatically; their cause is open (E14).
 2. Read the probe result; decide on the upstream report.
 3. Add attackers A3r and A9, then A5 and A8; run them on both backends.
 4. Write the TLA+ model for T2, T3 and T6; draft the T1 reduction.

@@ -18,7 +18,7 @@ export class Runner {
   }
 
   provenance() {
-    const git = args => { try { return execFileSync("git", args, { cwd: this.repo, encoding: "utf8" }).trim(); } catch { return null; } };
+    const git = args => { try { return execFileSync("git", args, { cwd: this.repo, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim(); } catch { return null; } };
     const sim = path.join(this.testbed, "sim.mjs");
     return {
       gitCommit: git(["rev-parse", "HEAD"]),
@@ -101,10 +101,37 @@ export class Runner {
       if (cur?.status === "cancelled" || signal === "SIGTERM" && cur?.cancelRequested) status = "cancelled";
       else if (cur?.status === "interrupted") status = "interrupted";
       else status = code === 0 && result ? "done" : "failed";
-      this.store.updateRun(run.id, { status, finishedAt: stamp(), exitCode: code, signal: signal || null,
+      const ended = this.store.updateRun(run.id, { status, finishedAt: stamp(), exitCode: code, signal: signal || null,
         summary: result ? Store.summarize(result) : null });
+      if (Runner.isStartupCrash(ended)) this.retry(ended, `start-up crash (${signal}, no progress reported)`);
       this.pump();
     });
+  }
+
+  // Start-up crash (limitation E14): the process was killed by a signal before it reported any progress. Seen as
+  // SIGSEGV on the Hardhat backend and as a V8 fatal error on the rpc backend, always within the first second and
+  // on a different cell each time, while reruns with identical parameters completed. Such runs are retried up to
+  // MAX_RETRIES times. Every attempt keeps its own run record (attempt, retryOf, retriedBy) and appears in the
+  // export, so failed attempts are never dropped. Crashes after the first progress report are never retried.
+  static MAX_RETRIES = 2;
+  static isStartupCrash(r) {
+    return !!r && r.status === "failed" && !!r.signal && r.signal !== "SIGTERM" && !r.cancelRequested && !r.progress;
+  }
+
+  retry(failed, reason) {
+    const attempt = (failed.attempt || 1) + 1;
+    if (attempt > 1 + Runner.MAX_RETRIES) return null;
+    const base = failed.retryOf || failed.id;
+    const r = { id: `${base}-a${attempt}`, campaign: failed.campaign, seq: failed.seq, spec: failed.spec, seed: failed.seed,
+      backend: failed.backend, rpc: failed.rpc, horizon: failed.horizon, trace: failed.trace, status: "queued",
+      // Same createdAt and seq as the failed attempt, so the retry runs next instead of at the end of the queue.
+      createdAt: failed.createdAt, queuedAt: stamp(), startedAt: null, finishedAt: null, exitCode: null, progress: null,
+      summary: null, attempt, retryOf: base, retryReason: reason };
+    this.store.saveRun(r);
+    this.store.updateRun(failed.id, { retriedBy: r.id });
+    const c = this.store.getCampaign(failed.campaign);
+    if (c && !c.runIds.includes(r.id)) { c.runIds.splice(c.runIds.indexOf(failed.id) + 1, 0, r.id); this.store.saveCampaign(c); }
+    return r;
   }
 
   cancelRun(id) {

@@ -76,13 +76,14 @@ export class Store {
       "lossUsd", "lossETH", "lossUSDT", "lossUSDC", "detectT", "containT", "containments", "delegatedBlocks",
       "alertsDuringAttack", "falseAlerts", "firstAlert", "benignRequested", "benignSent", "benignBlocked", "benignEscalated",
       "benignPaused", "benignLandedOk", "benignReverted", "benignMissing", "benignRejectedAtSend",
-      "detectSec", "containSec", "detectBlocks", "containBlocks", "stepOverruns", "steps", "runtimeSec", "client", "chainId"];
+      "detectSec", "containSec", "detectBlocks", "containBlocks", "stepOverruns", "steps", "runtimeSec", "client", "chainId",
+      "attempt", "retryOf", "retriedBy", "exitCode", "signal"];
     const esc = v => v === null || v === undefined ? "" : /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v);
     const rows = [cols.join(",")];
     for (const id of ids) {
       const r = this.getRun(id); if (!r) continue;
       const flat = { ...r, gitCommit: r.provenance?.gitCommit, gitDirty: r.provenance?.gitDirty, simSha256: r.provenance?.simSha256,
-        node: r.provenance?.node, ...(r.summary || {}) };
+        node: r.provenance?.node, ...(r.summary || {}), attempt: r.attempt ?? 1 };
       rows.push(cols.map(c => esc(flat[c])).join(","));
     }
     return rows.join("\n") + "\n";

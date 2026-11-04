@@ -54,6 +54,33 @@ for (const sp of specs) {
   console.log(`| ${sp} | ${g.map(a => a.run.seed).join(", ")} | ${usd(m)} | ${usd(Math.min(...L))} – ${usd(Math.max(...L))} | ${usd(lo)} – ${usd(hi)} | ${spread} | ${Math.min(...land)} – ${Math.max(...land)} | ${fa} | ${dc} |`);
 }
 
+// Exact two-sided Wilcoxon signed-rank test: zero differences dropped, average ranks for ties, exact null
+// distribution by enumerating sign assignments (counted with a subset-sum table on doubled ranks).
+const wilcoxon = d => {
+  const nz = d.filter(x => x !== 0), n = nz.length;
+  if (!n) return null;
+  const order = nz.map((x, i) => ({ a: Math.abs(x), i })).sort((p, q) => p.a - q.a), rank = new Array(n);
+  for (let i = 0; i < n;) { let j = i; while (j + 1 < n && order[j + 1].a === order[i].a) j++; for (let k = i; k <= j; k++) rank[order[k].i] = i + j + 2; i = j + 1; }
+  const wPlus = nz.reduce((p, x, i) => p + (x > 0 ? rank[i] : 0), 0), total = rank.reduce((p, r) => p + r, 0);
+  let counts = new Map([[0, 1]]);
+  for (const r of rank) { const next = new Map(counts); for (const [s, c] of counts) next.set(s + r, (next.get(s + r) || 0) + c); counts = next; }
+  const lo = Math.min(wPlus, total - wPlus); let tail = 0;
+  for (const [s, c] of counts) if (s <= lo) tail += c;
+  return { n, p: Math.min(1, 2 * tail / 2 ** n) };
+};
+const cell = new Map([...done.values()].map(a => [`${a.run.spec}|${a.run.seed}`, a.r]));
+const attackers = [...new Set(specs.map(sp => sp.split("-")[1]))].sort();
+const contrasts = [["R0", "R1"], ["R0", "R2"], ["R0", "R3"], ["R0", "R4"], ["R1", "R4"], ["R2", "R4"], ["R3", "R4"]];
+console.log("\n| Contrast (loss) | Seeds paired | Median reduction | Seeds with lower loss | Exact Wilcoxon p (two-sided) |");
+console.log("|---|---|---|---|---|");
+for (const A of attackers) for (const [x, y] of contrasts) {
+  const seeds = [...new Set([...done.values()].map(a => a.run.seed))].sort((p, q) => p - q)
+    .filter(s => cell.has(`${x}-${A}|${s}`) && cell.has(`${y}-${A}|${s}`));
+  if (!seeds.length) continue;
+  const d = seeds.map(s => cell.get(`${x}-${A}|${s}`).lossUsd - cell.get(`${y}-${A}|${s}`).lossUsd), w = wilcoxon(d);
+  console.log(`| ${x}-${A} → ${y}-${A} | ${seeds.length} | ${usd(median(d))} | ${d.filter(v => v > 0).length} of ${seeds.length} | ${w ? (w.p < 0.001 ? w.p.toExponential(1) : w.p.toFixed(4)) + (w.n < seeds.length ? ` (${seeds.length - w.n} ties dropped)` : "") : "identical at every seed"} |`);
+}
+
 const failed = attempts.filter(a => a.run.status !== "done");
 console.log(`\nAttempts: ${attempts.length} (${attempts.length - failed.length} completed, ${failed.length} not completed).`);
 for (const a of failed) {

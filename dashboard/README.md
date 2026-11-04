@@ -54,3 +54,19 @@ Each run is a directory under `DATA_DIR/runs/<runId>/` (`run.json`, `result.json
 `DATA_DIR/campaigns/<id>.json`. Files are written atomically. On restart, queued runs resume; runs that were
 executing are marked **interrupted** and never silently re-run or counted. To keep results for a paper,
 copy the run directories (or the CSV) into `testbed/results/<date>/` and commit them.
+
+## Start-up crashes (limitation E14)
+
+Simulator processes occasionally die from a signal in their first second, before any output (SIGSEGV, or
+SIGABRT after `free(): invalid pointer`).
+- **Retry.** The runner retries such a run up to twice. It runs right after the failed attempt with identical
+  parameters, as `<runId>-a2` and then `-a3`.
+- **Record.** Every attempt keeps its own record (`attempt`, `retryOf`, `retriedBy`, `signal`, `exitCode`)
+  and appears in the campaign and the CSV export. The campaign's counts therefore still show the failed
+  attempts.
+- **Limits.** A run that crashes after its first progress report is never retried automatically.
+- **Diagnostics.** Runs start with `--report-on-fatalerror`, so a V8 fatal error leaves a report in the run
+  folder.
+- **Finding the cause.** `testbed/tools/start-probe.mjs` measures crash rates for Node, viem, solc-js, Hardhat
+  and the full simulator start.
+- **Test.** `node test-retry.mjs` checks the retry with a fake simulator; CI runs it.
