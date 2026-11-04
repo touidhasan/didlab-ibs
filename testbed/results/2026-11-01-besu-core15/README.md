@@ -112,6 +112,16 @@ never more than one block per step.
   R0-A1 and 279 after R0-A2, then stayed at 279: only the unprotected baseline leaves stuck transactions
   behind. Each run now records the pool size at start and end (`timing.txpool`).
 
+## Null-read probe (2026-11-02, idle chain)
+
+`research-net/probe-null-reads.mjs`, 60 min on the idle chain right after the reruns: 1,801 blocks,
+3,602 balance reads (at `latest` and at the explicit block number, immediately after each new block),
+**0 nulls, 0 errors**. This does not rule out the fault: the campaigns saw 5 nulls in about 11.5 h,
+and the simulator makes many more state reads per block than this probe did, so at the campaigns' rate
+one idle hour of 3,602 reads would be expected to show none. Next: a probe with 20× the reads per block
+(`REPEAT=20`) for several hours; if it still shows none, the fault most likely needs transaction load or
+a busy txpool.
+
 ## Next
 
 1. Run the probe for an hour on the idle chain; if it shows no nulls, repeat it alongside a Besu campaign.

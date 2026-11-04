@@ -5,10 +5,11 @@
 //
 // Usage (run when no campaign is active, to keep campaign timing clean):
 //   RPC=http://127.0.0.1:18545 MINUTES=60 node probe-null-reads.mjs > ~/probe-$(date +%F-%H%M).jsonl
-// Optional: ADDRS=0xabc...,0xdef...   POLL_MS=20
+// Optional: ADDRS=0xabc...,0xdef...   POLL_MS=20   REPEAT=20 (reads per address and tag per block)
 const RPC = process.env.RPC || "http://127.0.0.1:18545";
 const MINUTES = Number(process.env.MINUTES || 60);
 const POLL_MS = Number(process.env.POLL_MS || 20);
+const REPEAT = Number(process.env.REPEAT || 1);
 const ADDRS = (process.env.ADDRS || "0xfA2f208E78283a2AB105d4C05F081AC0e025C7e8").split(","); // faucet
 
 let id = 0;
@@ -28,7 +29,7 @@ while (Date.now() < end) {
   if (bn && bn !== last) {
     last = bn; blocks++;
     const seenAt = Date.now();
-    for (const a of ADDRS) for (const tag of ["latest", bn]) {
+    for (let k = 0; k < REPEAT; k++) for (const a of ADDRS) for (const tag of ["latest", bn]) {
       reads++;
       try {
         const v = await rpc("eth_getBalance", [a, tag]);
@@ -42,4 +43,4 @@ while (Date.now() < end) {
   }
   await new Promise(r => setTimeout(r, POLL_MS));
 }
-console.log(JSON.stringify({ summary: { rpc: RPC, client, minutes: MINUTES, blocks, reads, nulls, errors } }));
+console.log(JSON.stringify({ summary: { rpc: RPC, client, minutes: MINUTES, repeat: REPEAT, blocks, reads, nulls, errors } }));
