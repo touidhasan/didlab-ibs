@@ -10,7 +10,7 @@ defenses.
 | [`testbed/`](testbed/) | In-process simulator (Hardhat EDR, Prague): incident replay, 4 attacker models, IBS control configurations R0–R4 | Node 20+ |
 | [`research-net/`](research-net/) | 4-validator Hyperledger Besu QBFT network with Prague enabled (chain 252701), plus an EIP-7702 smoke test | Docker + Compose, Node 20+ |
 | [`dashboard/`](dashboard/) | Experiment dashboard: launch campaigns, live runs and chain health, results with provenance, comparison, CSV export | Node 20+ |
-| [`docs/`](docs/) | [`SCOPE_AND_LIMITATIONS.md`](docs/SCOPE_AND_LIMITATIONS.md): living register of scope, limitations and disclosures | — |
+| [`docs/`](docs/) | [`RESEARCH_FRAMING.md`](docs/RESEARCH_FRAMING.md): problem, threat model, formal model, proofs, evaluation and data plan; [`SCOPE_AND_LIMITATIONS.md`](docs/SCOPE_AND_LIMITATIONS.md): living register of scope, limitations and disclosures | — |
 | [`infra/proxmox/`](infra/proxmox/) | Script that provisions the Ubuntu 24.04 VM hosting the research network on Proxmox VE | Proxmox host |
 
 ## Quick start (5 minutes, laptop only)
