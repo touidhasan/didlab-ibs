@@ -78,4 +78,5 @@ A3 policy-aware (no EIP-7702, max-size plain transfers), A4 = A3 + intent author
 ## Known limits
 
 Single EVM chain; software signer (no HSM/MPC/TEE); scripted attackers; synthetic traffic;
-issuer freezes, swaps and laundering not modelled; single random seed.
+issuer freezes, swaps and laundering not modelled. Seeds 7–11 on Hardhat change no outcome
+(`results/2026-11-04-hardhat-5seeds/`); Besu has seed 7 only. Full list: `docs/SCOPE_AND_LIMITATIONS.md`.

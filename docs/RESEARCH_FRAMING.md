@@ -212,9 +212,9 @@ will test whether any attacker exceeds them; by T3 none should.
   - signer denials by reason;
   - step overruns, null reads, txpool size (validity checks).
 - **Statistics:**
-  - 5 seeds per cell, more if variance demands it;
-  - medians with bootstrap 95% CIs;
-  - paired Wilcoxon signed-rank tests across seeds for configuration contrasts;
+  - 10 seeds per cell on Hardhat and 5 on Besu. A paired Wilcoxon test on 5 pairs cannot give a two-sided p below 0.0625, and with 5 seeds the bootstrap CI of the median is just the observed range (`testbed/results/2026-11-04-hardhat-5seeds/`). Besu validates outcomes; it isn't used for contrasts;
+  - medians with bootstrap 95% CIs (`testbed/tools/seed-summary.mjs`);
+  - paired Wilcoxon signed-rank tests across seeds for configuration contrasts, alongside the per-seed values;
   - every R0 baseline reported as a [Besu, Hardhat] range until A3r removes the dependence.
 - **Parameter study.** Sweep $B$, $T$ and $b$ to draw the loss vs availability frontier. Calibrate
   realistic values from real hot-wallet traffic (§8).
@@ -294,7 +294,7 @@ will test whether any attacker exceeds them; by T3 none should.
 
 ## 12. Next steps (in order)
 
-1. Finish the Hardhat multi-seed campaign; report seed variance (closes E5).
+1. ~~Finish the Hardhat multi-seed campaign; report seed variance (closes E5).~~ Done 2026-11-04: the seed changes no outcome (`testbed/results/2026-11-04-hardhat-5seeds/`). Next, extend Hardhat to 10 seeds (seeds 12–16).
 2. Read the probe result; decide on the upstream report.
 3. Add attackers A3r and A9, then A5 and A8; run them on both backends.
 4. Write the TLA+ model for T2, T3 and T6; draft the T1 reduction.

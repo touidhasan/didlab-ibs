@@ -72,7 +72,10 @@ export class Runner {
       OUT: out, PROGRESS: "10", ...(run.trace ? { TRACE: "1" } : {}), ...(run.rpc ? { RPC: run.rpc } : {}) };
     delete env.PORT; delete env.HOST;
     if (!run.trace) delete env.TRACE;
-    const child = spawn(process.execPath, ["sim.mjs", `=${run.spec}`], { cwd: this.testbed, env, stdio: ["ignore", "pipe", "pipe"] });
+    // A V8 fatal error writes a Node diagnostic report (report.*.json) into the run's folder; a SIGSEGV is recorded as
+    // the run's signal. Both have happened at start-up (limitation E14), so the evidence stays with the failed run.
+    const child = spawn(process.execPath, ["--report-on-fatalerror", `--report-directory=${this.store.runDir(run.id)}`, "sim.mjs", `=${run.spec}`],
+      { cwd: this.testbed, env, stdio: ["ignore", "pipe", "pipe"] });
     this.children.set(run.id, child);
     this.store.updateRun(run.id, { status: "running", startedAt: stamp(), provenance: prov, pid: child.pid });
     let lastWrite = 0;
