@@ -47,4 +47,4 @@ Files:
 
 - **Hardhat.** A wrong computation could, in principle, change a result without crashing. Recorded Hardhat results are therefore accepted only after a replay on other hardware (`tools/replay-check.mjs`). So far all 30 replayed cells are identical. The full set is replayed at the results freeze (CP4).
 - **Besu.** Runs on the same host, so Besu runs are not replayed on other hardware. The 12 controlled Besu runs matched Hardhat, and the three R0 differences have a traced cause (E8).
-- **Until the CPU is replaced,** turbo stays off on the host and every run is recorded with it off.
+- **Until the CPU is replaced,** turbo stays off on the host and every run is recorded with it off. Since 2026-11-05 about 14:00 UTC, this is enforced at boot by `no-turbo.service` on the host, which writes 1 to `/sys/devices/system/cpu/intel_pstate/no_turbo`.

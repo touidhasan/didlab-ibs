@@ -6,7 +6,7 @@
 - **How often.** 113 nulls in 432,040 reads (0.026%), with no errors.
 - **When.** Every null came 0–7 ms after `eth_blockNumber` first showed a new block, and they hit only 15 of 10,801 blocks.
 - **Which tags.** Reads at the explicit new block number returned null as well as reads at `latest`. So for a few milliseconds Besu reports block N as the newest block while the state of block N cannot yet be read.
-- **A 30-second pattern.** 13 of the 15 affected blocks were imported at second :17 or :47 of the minute. Something that runs every 30 seconds on the machine appears to widen the window. Docker health checks, if they run at a 30-second interval, are the first candidate to check; this is not tested.
+- **A 30-second pattern.** 13 of the 15 affected blocks were imported at second :17 or :47 of the minute. Something that runs every 30 seconds on the machine appears to widen the window. It is not the Docker health check: the Besu image checks every 5 s (`[ -f /tmp/pid ]`), not every 30 s. The cause is open.
 
 ## Setup
 
@@ -46,3 +46,12 @@ File: `2026-11-04-null-probe-6h.jsonl.gz`, one line per null and a final summary
 - **This is a candidate upstream report.** The probe is a minimal reproduction that needs no simulator.
   - Expected behaviour: once a node reports block N, it either serves state at N or returns an error, never `null`.
   - The report waits for the turbo-off repeat, so a hardware cause is excluded first.
+
+## Repeat with turbo off (running)
+
+- **The run.** Started 2026-11-05 at about 14:00 UTC: same command and settings, with turbo off on the host since then (`no-turbo.service`).
+- **Node restart.** The four Besu nodes were restarted at 2026-11-04 16:34:52 UTC, after the first probe. Docker's restart count is 0, so this was a deliberate restart, not a crash.
+- **Prediction, written down before the result.**
+  - If the 30-second pattern comes from a timer inside Besu that started with the node, the nulls should now cluster at seconds :22 and :52.
+  - If it comes from something on the machine tied to the wall clock, they should stay at :17 and :47.
+
