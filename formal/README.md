@@ -4,9 +4,24 @@
 that controls the request builder. TLC checks the properties of `docs/RESEARCH_FRAMING.md` §6 over every
 behaviour up to a small horizon.
 
-**Status (2026-11-05): written, not yet run.** No TLC result exists yet, so nothing here is a result. Running
-it needs the TLA+ tools (`tla2tools.jar`, v1.8.0, from the TLA+ project's GitHub releases), which have not been
-downloaded on the machine where the model was written. Until TLC has parsed and checked it, expect syntax fixes.
+**Status: checked on 2026-11-05.** TLC (TLA+ tools v1.8.0, OpenJDK 21) ran on the research VM at commit
+`9885bf2`, with the host's turbo off. All 8 outcomes matched `expected.txt`: 6 configurations pass, and the
+2 expected violations were found.
+
+| Config | Outcome | Distinct states |
+|---|---|---|
+| `R4-A4` | pass | 7,822,448 |
+| `R1` | pass | 5,131,758 |
+| `R3` | pass | 1,795,505 |
+| `R3-hoarding` | `T3c_ContainedWithoutHoarding` violated, as expected | 523,178 (at the violation) |
+| `R2` | `T5_NoLoss` violated, as expected | 1,376 (at the violation) |
+| `R4` | pass | 403 |
+| `R4t` | pass | 403 |
+| `Benign` | pass | 61 |
+
+`R4` and `R4t` are small because no attacker request is ever signed: the signer refuses all of them. The
+reachable states are the customers' withdrawals and the alarms. The TLC logs, with the two counterexample
+traces, are to be added under `formal/results/`.
 
 ## Run
 

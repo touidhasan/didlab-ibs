@@ -178,6 +178,8 @@ On an alarm at block $k$: $f \leftarrow 1$ and replenishment halts, effective fr
 - **TLA+ (TLC).** The signer, watcher and containment state machine with budgets, held signatures and freeze
   (`formal/IBS.tla`). It checks T1–T4, T6 and T7 over bounded horizons, plus two expected failures: T5's one-block
   drain without pre-signing controls, and the hoarding counterexample to the old $\mathit{Loss} \le B$ claim.
+  **Checked 2026-11-05:** all 8 configurations gave the expected outcome, up to 7.8 million distinct states, at
+  small sizes (B = 4, T = 2, cap 2, ν = 2, 4 blocks). Extending T3 to all sizes (Apalache, TLAPS or Lean) remains.
 - **Tamarin.** Intent binding, replay and cross-chain replay (T1), alongside EIP-7702 authorization
   semantics, following the method of `qian2026delegproof`.
 - Proof sketches go in Paper B; the models go in the repository with CI.
