@@ -296,7 +296,7 @@ will test whether any attacker exceeds them; by T3 none should.
 
 1. ~~Finish the Hardhat multi-seed campaign; report seed variance (closes E5).~~ Done 2026-11-04 at 10 seeds: the seed changes no outcome, and every configuration contrast is either significant (p ≈ 0.002) or identical at every seed (`testbed/results/2026-11-04-hardhat-10seeds/`). Start-up crashes are retried automatically; their cause is open (E14).
 2. Read the probe result; decide on the upstream report.
-3. Add attackers A3r and A9, then A5 and A8; run them on both backends.
+3. Add attackers A3r and A9, then A5 and A8; run them on both backends. A3r and A9 were built on 2026-11-05: on Hardhat they equal A3, and Besu runs are pending.
 4. Write the TLA+ model for T2, T3 and T6; draft the T1 reduction.
 5. Verify the ≥$100M pending catalog candidates first; code all incidents for RQ5.
 6. Public hot-wallet traffic: data pull, distribution fit, budget false-positive analysis.

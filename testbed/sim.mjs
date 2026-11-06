@@ -89,7 +89,11 @@ let K = keys("sigsim:");
 const nextNonce = new Map();
 async function pending(a) {
   a = getAddress(a);
-  const c = await pub.getTransactionCount({ address: a, blockTag: "pending" });
+  // A node can fail to build its pending block while it holds a transaction that is no longer affordable
+  // (Hardhat's interval-mined node does, after attacker A9 queues transfers beyond the balance). Then fall back
+  // to the mined count, plus what this process has already sent (below); count it so it is reported.
+  const c = await pub.getTransactionCount({ address: a, blockTag: "pending" })
+    .catch(() => { rpcStats.pendingFallbacks = (rpcStats.pendingFallbacks || 0) + 1; return pub.getTransactionCount({ address: a, blockTag: "latest" }); });
   const l = nextNonce.get(a) ?? 0;
   return c > l ? c : l;
 }
@@ -254,7 +258,7 @@ class Signer {
       }
       this.window.push({ block: now, usd });
     }
-    const raw = await key.signTransaction({ chainId: CHAIN_ID, type: "eip1559", to: req.to, value: req.value || 0n, data: req.data || "0x", nonce: req.nonce, gas: req.gas, ...FEES });
+    const raw = await key.signTransaction({ chainId: CHAIN_ID, type: "eip1559", to: req.to, value: req.value || 0n, data: req.data || "0x", nonce: req.nonce, gas: req.gas, ...(req.fees || FEES) });
     return { ok: true, raw };
   }
 }
@@ -304,6 +308,9 @@ async function run({ name, cfg, attacker, seed = 7 }) {
   const trace = [];      // TRACE=1: per-step balances, to locate where two runs diverge
   const hubStart = await bal(K.hub.address);
   const atk = { auths: [], mode: attacker ? (attacker.kind === "aware" ? "adaptive" : attacker.kind) : null, vectors: {} };
+  // Counters for the mempool-aware attackers (A3r, A9); absent for the others, so their results are unchanged.
+  if (attacker?.replaceStalled || attacker?.prequeue) Object.assign(atk, { ops: { replacements: 0, replaceDenied: 0, replaceRejected: 0,
+    prequeued: 0, prequeueDenied: 0, prequeueRejected: 0 }, stall: {}, noQueue: {} });
   let prevBal = {}; for (const a of treasury) prevBal[a] = (await bal(a)).ETH;
   let lastScanned = await pub.getBlockNumber();
   const delegatedBlocks = { count: 0 };
@@ -368,6 +375,43 @@ async function run({ name, cfg, attacker, seed = 7 }) {
         if (!res.ok) break;
         await send(res.raw, w, nonce); amt -= ask; atk.vectors.plain = (atk.vectors.plain || 0) + usdOf(asset, ask);
       }
+    }
+  }
+  // A3r: a nonce that stays unmined for STALL_STEPS blocks while later transactions wait behind it (a client that
+  // admits underfunded transactions holds them, limitation E8) is replaced with a transfer the wallet can pay for
+  // now. Fees double with each replacement, above the client's price bump. A signer whose nonce window starts at
+  // the pending nonce refuses the replacement.
+  const STALL_STEPS = 3;
+  const minedNonce = w => pub.getTransactionCount({ address: w, blockTag: "latest" });
+  async function replaceIfStalled(w) {
+    const mined = await minedNonce(w), s = atk.stall[w] ??= { nonce: mined, since: tNow, bumps: 0 };
+    if (mined !== s.nonce) { Object.assign(s, { nonce: mined, since: tNow }); return; }
+    if (tNow - s.since < STALL_STEPS || s.bumps >= 8 || (await pending(w)) <= mined) return;
+    s.since = tNow; // whatever happens, wait another STALL_STEPS blocks before the next attempt
+    const eth = (await bal(w)).ETH;
+    let value = eth > 2n * E18 ? eth - 2n * E18 : 0n;
+    if (cfg.perTxUsd) { const cap = BigInt(Math.floor(cfg.perTxUsd / Number(ETH_USD))) * E18; if (value > cap) value = cap; }
+    const f = 2n ** BigInt(++s.bumps);
+    const fees = { maxFeePerGas: FEES.maxFeePerGas * f, maxPriorityFeePerGas: 10n ** 9n * f };
+    const res = await signer.request({ kind: "tx", wallet: w, to: K.hub.address, value, data: "0x", nonce: mined, gas: 50_000n, fees }, ctxA());
+    if (!res.ok) { atk.ops.replaceDenied++; return; }
+    if (await send(res.raw, w, mined)) {
+      atk.ops.replacements++; atk.vectors.replace = (atk.vectors.replace || 0) + usdOf("ETH", value);
+      log.push([tNow, `attacker: replaced stalled nonce ${mined} of ${w.slice(0, 8)} (fees x${f})`]);
+    } else atk.ops.replaceRejected++;
+  }
+  // A9: keeps cap-sized native transfers signed and queued beyond the wallet's balance, so they execute the moment
+  // funds arrive, before any watcher sees the block. A client that rejects underfunded transactions refuses them at
+  // send; the attacker then stops queueing on that wallet. A signer counts each signature against its budget.
+  const QUEUE = 20;
+  async function prequeue(w) {
+    const slice = BigInt(Math.floor((cfg.perTxUsd || 1_000_000) / Number(ETH_USD))) * E18; // 434 ETH, one cap
+    const mined = await minedNonce(w);
+    for (let n = await pending(w), tries = 0; n - mined < QUEUE && tries < QUEUE; n++, tries++) {
+      const res = await signer.request({ kind: "tx", wallet: w, to: K.hub.address, value: slice, data: "0x", nonce: n, gas: 50_000n }, ctxA());
+      if (!res.ok) { atk.ops.prequeueDenied++; return; }
+      if (!(await send(res.raw, w, n))) { atk.ops.prequeueRejected++; atk.noQueue[w] = true; log.push([tNow, `attacker: client refused a queued transfer from ${w.slice(0, 8)}; stops queueing there`]); return; }
+      atk.ops.prequeued++;
     }
   }
   async function delegated() { const c = await pub.getCode({ address: K.hot14.address }); return c && c.toLowerCase().includes(W.sweeper.slice(2).toLowerCase()); }
@@ -459,7 +503,12 @@ async function run({ name, cfg, attacker, seed = 7 }) {
         if (tNow === 884) await plainDrain(K.hotB.address, false);
       } else if (tNow >= 0) {
         // Adaptive attacker: capped plain transfers from every hot wallet, every block.
-        for (const w of [K.hot14.address, K.hot16.address, K.hotB.address]) await plainDrain(w, true);
+        // A3r first replaces a stalled nonce; A9 then tops up its queue of transfers beyond the balance.
+        for (const w of [K.hot14.address, K.hot16.address, K.hotB.address]) {
+          if (attacker.replaceStalled) await replaceIfStalled(w);
+          await plainDrain(w, true);
+          if (attacker.prequeue && !atk.noQueue[w]) await prequeue(w);
+        }
       }
     }
 
@@ -536,6 +585,7 @@ async function run({ name, cfg, attacker, seed = 7 }) {
     detectT: state.detect, containT: state.contain, containments: state.contains.length, lossAtFirstContainUsd: state.lossAtContain, delegatedBlocks: delegatedBlocks.count,
     alertsDuringAttack: state.alerts.filter(a => a.t >= -16).length, falseAlerts, firstAlert: firstAttackAlert?.kind || null,
     benign, benignLanded: landed, signerDenials: signer.denials, log, alerts: state.alerts.slice(0, 8),
+    attackerOps: atk.ops, attackerVectors: atk.ops ? atk.vectors : undefined,
     trace: process.env.TRACE ? trace : undefined,
     timing: BACKEND === "rpc" ? {
       t0Block: Number(clock.t0Block),
@@ -563,6 +613,8 @@ const ATK = {
   A2: { label: "A2 Blitz (atomic delegation+sweep, drains signed and sent in one block)", kind: "blitz" },
   A3: { label: "A3 Policy-aware (no EIP-7702; max-size plain transfers every block)", kind: "aware" },
   A4: { label: "A4 Policy-aware + intent authority also compromised", kind: "aware", mintIntents: true },
+  A3r: { label: "A3r Policy-aware + replaces a stalled nonce (mempool-aware)", kind: "aware", replaceStalled: true },
+  A9: { label: "A9 Mempool-aware (cap-sized native transfers kept queued beyond the balance)", kind: "aware", prequeue: true },
 };
 
 let unhandled = 0;
@@ -577,6 +629,8 @@ for (const a of ["A1", "A2", "A3", "A4", null]) plan.push(["R4t", a]);
 // E2 robustness: signer unfrozen 30 min after containment while the attacker keeps access.
 for (const c of ["R2", "R3", "R4"]) { CFG[c + "p"] = { ...CFG[c], label: CFG[c].label + " + early unfreeze (30 min)", recover: 150 }; for (const a of ["A1", "A3"]) plan.push([c + "p", a]); }
 plan.push(["R4p", "A4"]);
+// Mempool-aware attackers (limitation E8): A3r replaces a stalled nonce, A9 queues transfers ahead of the funds.
+for (const c of ["R0", "R1", "R2", "R3", "R4"]) for (const a of ["A3r", "A9"]) plan.push([c, a]);
 if (only === "--list") {
   console.log(JSON.stringify({
     configs: Object.fromEntries(Object.entries(CFG).map(([k, v]) => [k, v.label])),

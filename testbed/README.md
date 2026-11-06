@@ -68,12 +68,21 @@ Configurations:
 
 Attackers: A1 incident replay, A2 blitz (atomic delegation+sweep, all drains in one step),
 A3 policy-aware (no EIP-7702, max-size plain transfers), A4 = A3 + intent authority compromised.
+Mempool-aware (limitation E8): A3r = A3 + replaces a nonce that stays unmined for 3 blocks;
+A9 = A3 + keeps cap-sized native transfers queued beyond the balance. Both act only on a client that admits
+underfunded transactions (Besu); on Hardhat in-process they equal A3, which CI checks.
 
 ## Files
 
 - `contracts.sol`: mock stablecoins with issuer freeze, operator smart wallet, attacker sweeper.
 - `sim.mjs`: signer, intent authority, pipeline, exchange automation, attacker, watcher, experiment matrix.
 - `hardhat.config.js`: Prague hardfork, zero base fee.
+- `tools/seed-summary.mjs`: per-run table across seeds (median, range, bootstrap CI) and paired contrasts with an
+  exact Wilcoxon test, from result bundles.
+- `tools/replay-check.mjs`: reruns recorded Hardhat cells, each with the simulator version it was recorded with, and
+  checks the results are identical. `--current` uses today's `sim.mjs` instead, to show a change leaves results intact.
+- `tools/start-probe.mjs`: start-up crash rates per kind of process start (limitation E14).
+- `tools/nullproxy.mjs`: answers every Nth balance read with null, to test the null-read retry (limitation E13).
 
 ## Known limits
 

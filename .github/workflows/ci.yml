@@ -27,6 +27,20 @@ jobs:
           sleep 1
           BACKEND=rpc RPC=http://127.0.0.1:8597 HORIZON=40 TRACE=1 OUT=/tmp/nulls.json node sim.mjs =R4-A1
           node -e 'const r=require("/tmp/nulls.json").results[0]; const s=r.timing.rpc; console.log(s); if(!(s.nullReads>0 && s.recovered===s.nullReads)) process.exit(1)'
+      - name: A3r replaces stalled nonces on an interval-mined node (limitation E8)
+        working-directory: testbed
+        run: |
+          BACKEND=rpc RPC=http://127.0.0.1:8598 HORIZON=40 OUT=/tmp/a3r.json node sim.mjs =R0-A3r
+          node -e 'const r=require("/tmp/a3r.json").results[0]; console.log(r.attackerOps); if(!(r.attackerOps.replacements>0)) process.exit(1)'
+      - name: A3r and A9 equal A3 when the client refuses underfunded transactions (Hardhat in-process)
+        working-directory: testbed
+        run: |
+          for s in R0-A3 R0-A3r R0-A9; do HORIZON=60 OUT=/tmp/$s.json node sim.mjs =$s; done
+          node -e '
+            const [a, r, q] = ["R0-A3", "R0-A3r", "R0-A9"].map(s => require(`/tmp/${s}.json`).results[0]);
+            const same = x => ["lossUsd", "benign", "signerDenials"].every(k => JSON.stringify(x[k]) === JSON.stringify(a[k]));
+            console.log(a.lossUsd, r.lossUsd, q.lossUsd, r.attackerOps, q.attackerOps);
+            if (!same(r) || !same(q) || r.attackerOps.replacements !== 0 || q.attackerOps.prequeueRejected !== 3) process.exit(1)'
       - name: Install research-net smoke test
         working-directory: research-net
         run: npm ci
