@@ -1,0 +1,11 @@
+# Expected TLC outcome per configuration: "pass", or the property TLC must report as violated.
+# A violation that is expected documents a result: T5 (detection alone cannot stop a one-block drain) and the
+# hoarding counterexample to the old single-incident bound Loss <= B.
+R4-A4.cfg        pass
+R4.cfg           pass
+R4t.cfg          pass
+R3.cfg           pass
+R1.cfg           pass
+Benign.cfg       pass
+R2.cfg           T5_NoLoss
+R3-hoarding.cfg  T3c_ContainedWithoutHoarding

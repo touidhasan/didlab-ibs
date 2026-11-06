@@ -71,6 +71,8 @@ A3 policy-aware (no EIP-7702, max-size plain transfers), A4 = A3 + intent author
 Mempool-aware (limitation E8): A3r = A3 + replaces a nonce that stays unmined for 3 blocks;
 A9 = A3 + keeps cap-sized native transfers queued beyond the balance. Both act only on a client that admits
 underfunded transactions (Besu); on Hardhat in-process they equal A3, which CI checks.
+Hoarding (bound T3): A10 holds one nonce window of signatures on an idle wallet, unsent, until the budget
+window has passed, then sends them and drains like A3; A10i = A10 + intent authority compromised.
 
 ## Files
 

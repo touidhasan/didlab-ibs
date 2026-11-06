@@ -307,7 +307,7 @@ async function run({ name, cfg, attacker, seed = 7 }) {
   const benignTx = [];   // [hash, t, wallet, asset, amount] for every signed-and-accepted benign withdrawal
   const trace = [];      // TRACE=1: per-step balances, to locate where two runs diverge
   const hubStart = await bal(K.hub.address);
-  const atk = { auths: [], mode: attacker ? (attacker.kind === "aware" ? "adaptive" : attacker.kind) : null, vectors: {} };
+  const atk = { auths: [], mode: attacker ? (attacker.kind === "aware" ? "adaptive" : attacker.kind) : null, vectors: {}, hoard: [] };
   // Counters for the mempool-aware attackers (A3r, A9); absent for the others, so their results are unchanged.
   if (attacker?.replaceStalled || attacker?.prequeue) Object.assign(atk, { ops: { replacements: 0, replaceDenied: 0, replaceRejected: 0,
     prequeued: 0, prequeueDenied: 0, prequeueRejected: 0 }, stall: {}, noQueue: {} });
@@ -414,6 +414,24 @@ async function run({ name, cfg, attacker, seed = 7 }) {
       atk.ops.prequeued++;
     }
   }
+  // A10: collects one nonce window of capped signatures on a wallet without sending them, so nothing moves
+  // and nothing alerts. Once the budget window has rolled past them it sends them, then drains with the
+  // fresh budget like A3 (tests whether outstanding signatures escape the budget, bound T3).
+  async function collectHoard(w) {
+    const n0 = await pending(w), b = await bal(w);
+    for (let i = 0; i < (cfg.nonceWindow || 4); i++) {
+      const asset = b.USDT > 0n ? "USDT" : "ETH";
+      let ask = asset === "ETH" ? b.ETH - 2n * E18 : b.USDT;
+      if (cfg.perTxUsd) { const cap = asset === "ETH" ? BigInt(Math.floor(cfg.perTxUsd / Number(ETH_USD))) * E18 : BigInt(cfg.perTxUsd) * E18; if (ask > cap) ask = cap; }
+      const intent = attacker.mintIntents ? await ia.issue(w, asset, getAddress(K.hub.address), ask, "attacker") : undefined;
+      const req = asset === "ETH" ? { kind: "tx", wallet: w, to: K.hub.address, value: ask, data: "0x", nonce: n0 + i, gas: 50_000n, intent }
+        : { kind: "tx", wallet: w, to: W.usdt, value: 0n, data: encodeFunctionData({ abi: TRANSFER_ABI, functionName: "transfer", args: [K.hub.address, ask] }), nonce: n0 + i, gas: 100_000n, intent };
+      const res = await signer.request(req, ctxA());
+      if (!res.ok) break;
+      atk.hoard.push([res.raw, w, n0 + i, usdOf(asset, ask)]);
+    }
+    log.push([tNow, `attacker: holding ${atk.hoard.length} signed transfers from ${w.slice(0, 8)} unsent`]);
+  }
   async function delegated() { const c = await pub.getCode({ address: K.hot14.address }); return c && c.toLowerCase().includes(W.sweeper.slice(2).toLowerCase()); }
   async function ensureDelegation() {
     if (await delegated()) return true;
@@ -465,7 +483,7 @@ async function run({ name, cfg, attacker, seed = 7 }) {
     }
     // --- attacker schedule (offsets from the incident)
     if (attacker && !state.attackerCut) {
-      if (tNow === -16 && attacker.kind !== "aware") {
+      if (tNow === -16 && attacker.kind !== "aware" && attacker.kind !== "hoard") {
         const N = await pending(K.hot14.address);
         for (let i = 0; i < 50; i++) {
           const res = await signer.request({ kind: "auth7702", wallet: K.hot14.address, delegate: W.sweeper, nonce: N + i }, ctxA());
@@ -483,7 +501,15 @@ async function run({ name, cfg, attacker, seed = 7 }) {
           for (const a of asks) { const res = await signer.request({ kind: "tx", wallet: w, nonce: n, ...a }, ctxA()); if (res.ok) { blitz.push([res.raw, w, n]); n++; } }
         }
       }
-      if (atk.mode !== "adaptive") {
+      if (atk.mode === "hoard") {
+        const release = (cfg.windowBlocks || 0) + 1;
+        if (tNow === 0) await collectHoard(K.hotB.address); // hotB has no other traffic that could use its nonces
+        if (tNow === release) {
+          for (const [raw, w, n, usd] of atk.hoard) if (await send(raw, w, n)) atk.vectors.hoard = (atk.vectors.hoard || 0) + usd;
+          log.push([tNow, `attacker: sent ${atk.hoard.length} held transfers`]);
+        }
+        if (tNow >= release) for (const w of [K.hot14.address, K.hot16.address, K.hotB.address]) await plainDrain(w, true);
+      } else if (atk.mode !== "adaptive") {
         if (tNow === 0 && atk.auths.length) {
           const atomic = attacker.kind === "blitz";
           const nBefore = await pending(K.hot14.address);
@@ -585,7 +611,7 @@ async function run({ name, cfg, attacker, seed = 7 }) {
     detectT: state.detect, containT: state.contain, containments: state.contains.length, lossAtFirstContainUsd: state.lossAtContain, delegatedBlocks: delegatedBlocks.count,
     alertsDuringAttack: state.alerts.filter(a => a.t >= -16).length, falseAlerts, firstAlert: firstAttackAlert?.kind || null,
     benign, benignLanded: landed, signerDenials: signer.denials, log, alerts: state.alerts.slice(0, 8),
-    attackerOps: atk.ops, attackerVectors: atk.ops ? atk.vectors : undefined,
+    attackerOps: atk.ops, attackerVectors: atk.ops || atk.mode === "hoard" ? atk.vectors : undefined,
     trace: process.env.TRACE ? trace : undefined,
     timing: BACKEND === "rpc" ? {
       t0Block: Number(clock.t0Block),
@@ -615,6 +641,8 @@ const ATK = {
   A4: { label: "A4 Policy-aware + intent authority also compromised", kind: "aware", mintIntents: true },
   A3r: { label: "A3r Policy-aware + replaces a stalled nonce (mempool-aware)", kind: "aware", replaceStalled: true },
   A9: { label: "A9 Mempool-aware (cap-sized native transfers kept queued beyond the balance)", kind: "aware", prequeue: true },
+  A10: { label: "A10 Hoarding (holds one nonce window of signatures past the budget window, then drains)", kind: "hoard" },
+  A10i: { label: "A10i Hoarding + intent authority also compromised", kind: "hoard", mintIntents: true },
 };
 
 let unhandled = 0;
@@ -631,6 +659,9 @@ for (const c of ["R2", "R3", "R4"]) { CFG[c + "p"] = { ...CFG[c], label: CFG[c].
 plan.push(["R4p", "A4"]);
 // Mempool-aware attackers (limitation E8): A3r replaces a stalled nonce, A9 queues transfers ahead of the funds.
 for (const c of ["R0", "R1", "R2", "R3", "R4"]) for (const a of ["A3r", "A9"]) plan.push([c, a]);
+// Hoarding (bound T3): signatures held across a budget window.
+for (const c of ["R1", "R3", "R4"]) plan.push([c, "A10"]);
+plan.push(["R4", "A10i"]);
 if (only === "--list") {
   console.log(JSON.stringify({
     configs: Object.fromEntries(Object.entries(CFG).map(([k, v]) => [k, v.label])),

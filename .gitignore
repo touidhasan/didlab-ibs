@@ -26,3 +26,8 @@ runs/
 
 # Full-text papers: publisher/author copies, never committed (copyright). Notes live in survey/notes/.
 survey/papers/
+
+# TLA+ tools and TLC working files (formal/)
+formal/.tools/
+formal/states/
+formal/*_TTrace_*.tla

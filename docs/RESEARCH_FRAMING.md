@@ -168,22 +168,23 @@ On an alarm at block $k$: $f \leftarrow 1$ and replenishment halts, effective fr
 |---|---|---|---|---|
 | T1 | **Intent soundness.** Every transfer S signs matches, one-to-one, a distinct IA-issued intent with identical fields. | A-sig, A-key, A-dec | Reduction: a signed transfer without a matching fresh intent yields an IA forgery (contradicts EUF-CMA), or reuses an id (contradicts $U$). Equality of fields plus A-dec gives the effect. | R4 vs A1–A3: USD 0 loss on Hardhat and Besu; 6 no-intent denials in R4-A3 |
 | T2 | **No delegation.** No treasury account ever carries delegated code. | A-key, rule 2 | Induction over blocks: a 7702 designator needs an authorization signed by $w$'s key; only S holds it, and S signs only zero-address revocations. | Delegated blocks = 0 in R1, R3, R4 (R0-A1/A2: 1,149) |
-| T3 | **Exposure bound.** Signed outflow over any horizon $H$ satisfies $\mathit{Loss} \le B\lceil H/T\rceil$, even if IA is compromised. With budget-triggered containment and no unfreeze, $\mathit{Loss} \le B$. | Rules 5–6; budget alarm triggers C4 | Any $T$ consecutive blocks carry at most $B$ (rule 6); partition $[0,H]$ into $\lceil H/T\rceil$ windows. The first request that would breach $B$ freezes S, so at most $B$ is signed before freezing. | $B$ = USD 25M, $T$ = 300, $H$ = 1,200 ⇒ USD 100M: R1 USD 95.8M (all attackers, both backends). Single-incident bound USD 25M: R3-A3, R4-A4, R4t-A4 all USD 24.0M. With early unfreeze: R3p-A1/A3 and R4p-A4 USD 97.8–98.8M ≤ USD 100M |
+| T3 | **Exposure bound.** Signed outflow over any horizon $H$ satisfies $\mathit{Loss} \le B\lceil H/T\rceil$, even if IA is compromised. When every attacker outflow raises an alarm (C4 reconciles against an intact IA) and there is no unfreeze, $\mathit{Loss} \le B + W\nu b$ for $W$ hot wallets. *Revised 2026-11-05:* the earlier claim $\mathit{Loss} \le B$ ignored signatures held unsent across a window (attacker A10). Charging outstanding signatures to the budget until they execute would restore $\mathit{Loss} \le B$ (design option, not yet evaluated). | Rules 4–6; alarm triggers C4 | Any $T$ consecutive blocks carry at most $B$ of signatures (rule 6); partition $[0,H]$ into $\lceil H/T\rceil$ windows. Containment acts at the end of the first block with an attacker outflow. By then the attacker has spent at most $B$ signed in the current window, plus signatures held from earlier windows. Those are at most $\nu$ per wallet, since the nonce window starts at the pending nonce and held signatures do not advance it. | $B$ = USD 25M, $T$ = 300, $H$ = 1,200 ⇒ USD 100M: R1 USD 95.8M (all attackers, both backends). Single-incident: R3-A3, R4-A4, R4t-A4 all USD 24.0M. A10 (hoarding) on Hardhat: R3-A10 USD 22.0M, of which USD 4.0M was signed in an earlier window; this is below USD 25M only because legitimate withdrawals used about USD 7M of the fresh window, and the revised bound is USD 25M + 3·4·USD 1M = USD 37M. With early unfreeze: R3p-A1/A3 and R4p-A4 USD 97.8–98.8M ≤ USD 100M |
 | T4 | **Containment latency.** An outflow not authorized through S is detected at the block it is included in, and S is frozen from the next block. | Watcher liveness, independent node | Direct from the watcher loop; latency = one block + processing. | Besu, 2 s blocks: R2 detect/contain 2.04/2.05 s; R3-A3, R4-A3 alert ≤ 0.06 s, contain ≤ 2.00 s |
 | T5 | **Impossibility (negative result).** No detector that reacts to included blocks can bound the loss of a drain executed atomically in one block. | Any post-inclusion detector | Causality: the detector's first observation is the block that already contains the drain. Hence pre-sign controls (T1, T2) are *necessary* for atomic attacks. | R2-A2, R2-A3: contained in one block, USD 2,209.7M lost; R3/R4 vs A1/A2: USD 0 |
 | T6 | **Liveness.** With no attack, every benign request whose intent is valid and which respects $b$ and $B$ is signed. | IA available | Direct from the decision rule. | R4-benign: 726 of the 727 requests made while withdrawals were open were signed; 1 escalated (above $b$ = USD 1M) |
 | T7 | **Budget non-exhaustion.** Requests without a valid intent never consume budget, so an attacker without IA cannot deny service through the budget. | Rule order: budget is charged only on signing | Only signed transfers enter the window sum. | R4t vs A1–A3: 726 legitimate withdrawals completed, USD 0 loss. R1 (no C1): only 268 completed, 458 blocked |
 
 **Mechanized proofs (plan).**
-- **TLA+ (TLC).** The signer, watcher and containment state machine with budgets, freeze and unfreeze.
-  We check the T2, T3 and T6 invariants over bounded horizons.
+- **TLA+ (TLC).** The signer, watcher and containment state machine with budgets, held signatures and freeze
+  (`formal/IBS.tla`). It checks T1–T4, T6 and T7 over bounded horizons, plus two expected failures: T5's one-block
+  drain without pre-signing controls, and the hoarding counterexample to the old $\mathit{Loss} \le B$ claim.
 - **Tamarin.** Intent binding, replay and cross-chain replay (T1), alongside EIP-7702 authorization
   semantics, following the method of `qian2026delegproof`.
 - Proof sketches go in Paper B; the models go in the repository with CI.
 
-**The bounds are confirmed, not just asserted.** Observed losses sit 1–5% below each bound
-(T3), which shows the bounds are tight for the scripted attackers. A8 (drip) and A9 (mempool-aware)
-will test whether any attacker exceeds them; by T3 none should.
+**The bounds are tested, not just asserted.** Observed losses sit 1–5% below each bound (T3), so the bounds
+are tight for the scripted attackers. Adaptive attackers test them further. A10 (hoarding) already forced a
+correction: the single-incident bound is $B + W\nu b$, not $B$. A8 (drip) and A9 (mempool-aware) come next.
 
 ## 7. Experimental evaluation
 
@@ -285,7 +286,7 @@ will test whether any attacker exceeds them; by T3 none should.
 | Risk | Response |
 |---|---|
 | Novelty challenged by report-then-execute, PSD2 or policy engines | State the five-part combination exactly (§2). Credit each source. Show what each lacks with a concrete incident (e.g. Bybit passes a policy engine whose own update path is compromised). |
-| The intent authority becomes the new target | T3 bounds it ($\le B$ per incident; observed USD 24.0M at $B$ = USD 25M). A-ia requires user-device authentication and separate infrastructure; we report what happens when that fails (A4). |
+| The intent authority becomes the new target | T3 bounds it: at most $B$ per window while the attacker stays under budget, and $\le B + W\nu b$ once a budget breach contains it (observed USD 24.0M at $B$ = USD 25M). A-ia requires user-device authentication and separate infrastructure; we report what happens when that fails (A4). |
 | Internal transfers have no user intent | Model quorum-issued operational intents; evaluate sweeps and replenishment under A4-style compromise. |
 | Budgets block real business | Parameter frontier from real traffic (§8 item 3); T7 shows C1 prevents attacker-driven exhaustion. |
 | Results are artefacts of the simulator | Besu validation (done for seed 7); explain every disagreement; second client if possible. |
