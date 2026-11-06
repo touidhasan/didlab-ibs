@@ -46,8 +46,11 @@ export class Runner {
         status: "queued", createdAt: created, startedAt: null, finishedAt: null, exitCode: null, progress: null, summary: null });
       runIds.push(rid);
     }
+    // The simulator the campaign was queued with. A run that starts with a different sim.mjs (for example after a
+    // git pull while the campaign runs) is flagged simChanged, so one campaign never silently mixes versions.
+    const { gitCommit, simSha256 } = this.provenance();
     const c = { id, name: (name || "").slice(0, 120) || `${backend} campaign`, note: (note || "").slice(0, 2000),
-      backend, rpc, runs, seeds, horizon, trace: !!trace, createdAt: created, runIds };
+      backend, rpc, runs, seeds, horizon, trace: !!trace, createdAt: created, runIds, gitCommit, simSha256 };
     this.store.saveCampaign(c);
     this.pump();
     return c;
@@ -77,7 +80,9 @@ export class Runner {
     const child = spawn(process.execPath, ["--report-on-fatalerror", `--report-directory=${this.store.runDir(run.id)}`, "sim.mjs", `=${run.spec}`],
       { cwd: this.testbed, env, stdio: ["ignore", "pipe", "pipe"] });
     this.children.set(run.id, child);
-    this.store.updateRun(run.id, { status: "running", startedAt: stamp(), provenance: prov, pid: child.pid });
+    const camp = this.store.getCampaign(run.campaign);
+    const simChanged = !!camp?.simSha256 && camp.simSha256 !== prov.simSha256;
+    this.store.updateRun(run.id, { status: "running", startedAt: stamp(), provenance: prov, pid: child.pid, simChanged });
     let lastWrite = 0;
     const onData = buf => {
       fs.writeSync(log, buf);

@@ -77,7 +77,7 @@ export class Store {
       "alertsDuringAttack", "falseAlerts", "firstAlert", "benignRequested", "benignSent", "benignBlocked", "benignEscalated",
       "benignPaused", "benignLandedOk", "benignReverted", "benignMissing", "benignRejectedAtSend",
       "detectSec", "containSec", "detectBlocks", "containBlocks", "stepOverruns", "steps", "runtimeSec", "client", "chainId",
-      "attempt", "retryOf", "retriedBy", "exitCode", "signal"];
+      "attempt", "retryOf", "retriedBy", "exitCode", "signal", "simChanged"];
     const esc = v => v === null || v === undefined ? "" : /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v);
     const rows = [cols.join(",")];
     for (const id of ids) {

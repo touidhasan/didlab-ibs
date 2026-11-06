@@ -4,8 +4,13 @@
 that controls the request builder. TLC checks the properties of `docs/RESEARCH_FRAMING.md` §6 over every
 behaviour up to a small horizon.
 
-**Status: checked on 2026-11-05.** TLC (TLA+ tools v1.8.0, OpenJDK 21) ran on the research VM at commit
-`9885bf2`, with the host's turbo off. All 8 outcomes matched `expected.txt`: 6 configurations pass, and the
+**Status: checked on 2026-11-05.** TLC ran on the research VM at commit `9885bf2`, with the host's turbo off.
+- TLC version: `TLC2 Version 2026.11.06.005304 (rev: 3ec1cc4)`, the nightly build that GitHub serves under the
+  v1.8.0 pre-release tag.
+- Java: OpenJDK 21, 4 workers.
+- Logs, with both counterexample traces: `results/2026-11-05-tlc/`.
+
+Because the tag is a moving nightly, a rerun should record the jar's sha256. All 8 outcomes matched `expected.txt`: 6 configurations pass, and the
 2 expected violations were found.
 
 | Config | Outcome | Distinct states |
@@ -20,8 +25,18 @@ behaviour up to a small horizon.
 | `Benign` | pass | 61 |
 
 `R4` and `R4t` are small because no attacker request is ever signed: the signer refuses all of them. The
-reachable states are the customers' withdrawals and the alarms. The TLC logs, with the two counterexample
-traces, are to be added under `formal/results/`.
+reachable states are the customers' withdrawals and the alarms. Run times: R4-A4 5 min 21 s, R1 2 min 23 s,
+R3 47 s, the rest under 10 s.
+
+The two counterexamples (`results/2026-11-05-tlc/`):
+- **R2 (T5).** In block 0 the attacker gets a transfer of 3 signed, broadcasts it, and it executes. The loss is 3
+  before the block ends and before the watcher can act.
+- **R3-hoarding (old bound Loss ≤ B).**
+  - Block 0: the attacker gets two transfers of 2 signed (the full budget of 4). It holds the first and
+    broadcasts the second, which waits behind the first's nonce.
+  - Block 2: the window no longer includes block 0. The attacker broadcasts the held transfer, gets a third
+    signed from the fresh budget, and all three execute. The loss is 6 > B = 4.
+  - The bound T3c, Loss ≤ B + ν·Cap = 8, still holds.
 
 ## Run
 

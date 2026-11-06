@@ -377,28 +377,35 @@ async function run({ name, cfg, attacker, seed = 7 }) {
       }
     }
   }
-  // A3r: a nonce that stays unmined for STALL_STEPS blocks while later transactions wait behind it (a client that
-  // admits underfunded transactions holds them, limitation E8) is replaced with a transfer the wallet can pay for
-  // now. Fees double with each replacement, above the client's price bump. A signer whose nonce window starts at
-  // the pending nonce refuses the replacement.
-  const STALL_STEPS = 3;
+  // A3r: when a wallet's mined nonce has not moved for STALL_STEPS blocks while transactions wait behind it (a
+  // client that admits underfunded transactions holds them, limitation E8), the attacker replaces the stuck nonce
+  // with a transfer the wallet can pay for now, and each queued nonce after it (up to CLEAR) with a zero-value
+  // transfer, so the whole queue clears in one block. Customer withdrawals in that queue are lost. A nonce's fees
+  // double each time it is replaced (at most 8 times), above the client's price bump. A signer whose nonce window
+  // starts at the pending nonce refuses the replacements.
+  const STALL_STEPS = 2, CLEAR = 40;
   const minedNonce = w => pub.getTransactionCount({ address: w, blockTag: "latest" });
   async function replaceIfStalled(w) {
-    const mined = await minedNonce(w), s = atk.stall[w] ??= { nonce: mined, since: tNow, bumps: 0 };
+    const mined = await minedNonce(w), s = atk.stall[w] ??= { nonce: mined, since: tNow, bumps: {} };
     if (mined !== s.nonce) { Object.assign(s, { nonce: mined, since: tNow }); return; }
-    if (tNow - s.since < STALL_STEPS || s.bumps >= 8 || (await pending(w)) <= mined) return;
-    s.since = tNow; // whatever happens, wait another STALL_STEPS blocks before the next attempt
+    const top = await pending(w);
+    if (tNow - s.since < STALL_STEPS || top <= mined) return;
+    s.since = tNow; // wait another STALL_STEPS blocks before the next attempt
     const eth = (await bal(w)).ETH;
     let value = eth > 2n * E18 ? eth - 2n * E18 : 0n;
     if (cfg.perTxUsd) { const cap = BigInt(Math.floor(cfg.perTxUsd / Number(ETH_USD))) * E18; if (value > cap) value = cap; }
-    const f = 2n ** BigInt(++s.bumps);
-    const fees = { maxFeePerGas: FEES.maxFeePerGas * f, maxPriorityFeePerGas: 10n ** 9n * f };
-    const res = await signer.request({ kind: "tx", wallet: w, to: K.hub.address, value, data: "0x", nonce: mined, gas: 50_000n, fees }, ctxA());
-    if (!res.ok) { atk.ops.replaceDenied++; return; }
-    if (await send(res.raw, w, mined)) {
-      atk.ops.replacements++; atk.vectors.replace = (atk.vectors.replace || 0) + usdOf("ETH", value);
-      log.push([tNow, `attacker: replaced stalled nonce ${mined} of ${w.slice(0, 8)} (fees x${f})`]);
-    } else atk.ops.replaceRejected++;
+    let done = 0;
+    for (let n = mined; n < Math.min(top, mined + CLEAR); n++) {
+      const k = (s.bumps[n] = (s.bumps[n] || 0) + 1);
+      if (k > 8) continue;
+      const f = 2n ** BigInt(k), v = n === mined ? value : 0n;
+      const fees = { maxFeePerGas: FEES.maxFeePerGas * f, maxPriorityFeePerGas: 10n ** 9n * f };
+      const res = await signer.request({ kind: "tx", wallet: w, to: K.hub.address, value: v, data: "0x", nonce: n, gas: 50_000n, fees }, ctxA());
+      if (!res.ok) { atk.ops.replaceDenied++; break; }
+      if (await send(res.raw, w, n)) { atk.ops.replacements++; done++; if (v) atk.vectors.replace = (atk.vectors.replace || 0) + usdOf("ETH", v); }
+      else atk.ops.replaceRejected++;
+    }
+    if (done) log.push([tNow, `attacker: replaced ${done} queued nonces of ${w.slice(0, 8)} from ${mined}`]);
   }
   // A9: keeps cap-sized native transfers signed and queued beyond the wallet's balance, so they execute the moment
   // funds arrive, before any watcher sees the block. A client that rejects underfunded transactions refuses them at
