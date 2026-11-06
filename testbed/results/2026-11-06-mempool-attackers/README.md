@@ -55,5 +55,17 @@ For reference, R0-A3 at seed 7 (`../2026-11-01-besu-core15/`): Hardhat USD 2,421
   - **The redesign.** A3r now clears the whole stuck queue: after 2 blocks without progress, it replaces the stuck
     nonce with a payable transfer and up to 40 queued nonces behind it with zero-value transfers. That version
     made 36 replacements in the same test.
-  - **Still unmeasured.** Whether the defect alone explains the Besu result needs that run's `attackerOps`, which
-    is not in the CSV; the Besu bundle has it.
+  - **Confirmed from the Besu bundle (`besu-s7.json.gz`).** In R0-A3r, A3r made 16 replacements, 8 on each of two
+    wallets, all with value 0. It hit the limit by step 75 on hot wallet 14 and by step 103 on wallet 16. From then
+    on, hot wallet 14's nonce stalled exactly as under A3: steps 76–201, then 201–1,071. So the 200M USDT
+    replenishment at step 411 was never taken. The defect explains the gap; the fixed A3r is to be rerun.
+
+## What A9 did on Besu
+
+- **R0-A9.** Besu admitted A9's queued transfers (59 queued, 434 ETH each beyond the balance). The loss is only
+  USD 2.0M above A3's, because the 200M USDT replenishment is a token transfer, which A9 does not queue.
+- **The queue hurt customers instead.** Only 64 customer withdrawals landed (A3: 140). 378 were refused with
+  "Transaction nonce is too distant from current sender nonce", because the attacker's queue filled Besu's
+  per-sender limit.
+- **R1-A9 and R3-A9.** The signer refused every queued transfer for budget (3,443 and 3,446 times), so these runs
+  equal A3, as on Hardhat.
