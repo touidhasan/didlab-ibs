@@ -47,11 +47,27 @@ File: `2026-11-04-null-probe-6h.jsonl.gz`, one line per null and a final summary
   - Expected behaviour: once a node reports block N, it either serves state at N or returns an error, never `null`.
   - The report waits for the turbo-off repeat, so a hardware cause is excluded first.
 
-## Repeat with turbo off (running)
+## Repeat with turbo off (2026-11-05)
 
-- **The run.** Started 2026-11-05 at about 14:00 UTC: same command and settings, with turbo off on the host since then (`no-turbo.service`).
-- **Node restart.** The four Besu nodes were restarted at 2026-11-04 16:34:52 UTC, after the first probe. Docker's restart count is 0, so this was a deliberate restart, not a crash.
-- **Prediction, written down before the result.**
-  - If the 30-second pattern comes from a timer inside Besu that started with the node, the nulls should now cluster at seconds :22 and :52.
-  - If it comes from something on the machine tied to the wall clock, they should stay at :17 and :47.
+**Result: same fault, so the CPU is excluded. The 30-second trigger is tied to the wall clock.**
 
+| | First run (turbo on) | Repeat (turbo off) |
+|---|---|---|
+| Window (UTC) | 2026-11-04 about 00:49–06:49 | 2026-11-05 14:00–20:00 |
+| Reads | 432,040 | 432,040 |
+| Nulls (at `latest` / at number) | 113 (62 / 51) | 72 (43 / 29) |
+| Blocks with a null | 15 of 10,801 | 20 of 10,801 |
+| Time after the new block appeared | 0–7 ms | 0–7 ms |
+| Blocks at second :17 or :47 | 13 of 15 | 16 of 20 (10 at :17, 6 at :47) |
+| Other seconds | :25, :49 | :11, :23, :37 (2) |
+| Block number mod 15 of those :17/:47 blocks | 9 (all 13) | 4 (all 16) |
+
+- **The CPU is excluded.** With turbo off, the fault hits a similar number of blocks. The CPU fault behind E14 is therefore not the cause.
+- **The prediction is decided.** The Besu nodes were restarted at 16:34:52 UTC. A timer inside Besu started with the nodes would have moved the nulls to :22/:52. They stayed at :17/:47, so the trigger is tied to the wall clock.
+- **It isn't tied to block numbers either.** Block production shifted between the runs, so the same wall-clock seconds now fall on blocks with a different residue mod 15 (9, then 4).
+- **So something on the machine runs every 30 seconds at :17 and :47 and widens a window inside Besu.** In that window, Besu reports block N while N's state cannot be read.
+  - The Docker health check runs every 5 s, so it isn't the trigger.
+  - Load from another guest on the Proxmox host is one possibility; not identified.
+- **This is Besu's own fault.** Whatever the trigger, a node should not answer a valid read of the block it just reported with `null`.
+
+File: `2026-11-05-null-probe-6h-turbo-off.jsonl.gz`, one line per null and a summary line. The draft upstream report is `../upstream/besu-null-balance-at-new-head.md`.

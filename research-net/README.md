@@ -76,3 +76,6 @@ RPC=http://127.0.0.1:18545 MINUTES=60 node probe-null-reads.mjs > ~/probe-$(date
 ```
 
 Each null is one JSON line (time, ms after the new block was seen, block, `latest` or explicit number); the last line is a summary.
+
+Findings so far are in `results/2026-11-04-null-probe-6h.md`. Two 6-hour runs, one with the host's turbo boost off, each
+found nulls only 0–7 ms after a new block. A draft report for the Besu maintainers is in `upstream/`.
