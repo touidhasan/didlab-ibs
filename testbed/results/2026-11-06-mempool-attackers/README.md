@@ -12,7 +12,8 @@
   - it gave up after 8 replacements per wallet (a defect);
   - it replaced only the stuck nonce, not the queue behind it.
 
-  Both are fixed (below). R0-A3r is to be rerun on Besu.
+  Both are fixed (below). **Rerun on 2026-11-07: the fixed A3r closes the gap.** R0-A3r lost USD 2,420.95M on
+  Besu, USD 0.29M (0.012%) below Hardhat. The whole 200M USDT was taken, and 125 ETH less.
 - **No step overruns with turbo off.** All 10 Besu runs had 0 step overruns in 1,261 steps, and detection and
   containment took one block (1.97–2.01 s). The risk that turbo off would slow Besu steps did not materialise.
 
@@ -69,3 +70,25 @@ For reference, R0-A3 at seed 7 (`../2026-11-01-besu-core15/`): Hardhat USD 2,421
   per-sender limit.
 - **R1-A9 and R3-A9.** The signer refused every queued transfer for budget (3,443 and 3,446 times), so these runs
   equal A3, as on Hardhat.
+
+## Rerun of R0-A3r with the fixed attacker (2026-11-07)
+
+`besu-s7-R0-A3r-fixed.csv`:
+- Campaign `c20261107040247-0bf0f2`, commit `5d82e48` (sim.mjs `0a706ddf`, `simChanged` false).
+- Besu 26.8.0, seed 7, horizon 1,200, trace on, turbo off.
+- 1,261 steps with 0 overruns.
+
+| | Hardhat (A3 = A3r) | Besu, A3 (2026-11-01) | Besu, A3r as first built | Besu, A3r fixed |
+|---|---|---|---|---|
+| Loss | USD 2,421.24M | USD 2,218.6M | USD 2,218.85M | **USD 2,420.95M** |
+| Gap to Hardhat | | −USD 202.6M | −USD 202.4M | **−USD 0.29M (−0.012%)** |
+| USDT taken | 1,960.74M | 200M less | 200M less | **all** |
+| Customer withdrawals landed / reverted / missing | 110 / 0 / 0 | 140 / – / – | 134 / 119 / 194 | 99 / 206 / 422 |
+
+- **The R0 baseline gap came from a naive attacker, not from Besu.** An attacker who clears stalled nonces takes
+  practically the same amount on both clients. The remaining 125 ETH (USD 0.29M) has not been traced.
+- **Customers pay for it.** A3r's zero-value replacements cancel the customer withdrawals queued behind a stall:
+  206 reverted and 422 missing, against none on Hardhat.
+- **This settles R0-A3.** The R0 baselines for A1 and A2 (USD 4.0M lower on Besu) involve the delegated-code
+  sweeps and are not addressed by A3r, so they stay reported as a [Besu, Hardhat] range.
+
