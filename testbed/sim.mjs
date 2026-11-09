@@ -71,6 +71,22 @@ const out = JSON.parse(solc.compile(JSON.stringify({
 if (out.errors?.some(e => e.severity === "error")) { console.error(out.errors); process.exit(1); }
 const art = n => ({ abi: out.contracts["c.sol"][n].abi, bytecode: "0x" + out.contracts["c.sol"][n].evm.bytecode.object });
 const STABLE = art("MockStable"), SAFE = art("OperatorSafe"), SWEEPER = art("Sweeper");
+// Attacker A5's multisig is compiled separately and only when an A5 run needs it, so the bytecode and
+// set-up of every other run stay exactly as recorded.
+let A5ART = null;
+function a5Art() {
+  if (A5ART) return A5ART;
+  const o = JSON.parse(solc.compile(JSON.stringify({
+    language: "Solidity", sources: { "a5.sol": { content: fs.readFileSync(new URL("./contracts-a5.sol", import.meta.url), "utf8") } },
+    settings: { evmVersion: "prague", optimizer: { enabled: true, runs: 200 }, outputSelection: { "*": { "*": ["abi", "evm.bytecode.object"] } } },
+  })));
+  if (o.errors?.some(e => e.severity === "error")) throw new Error(JSON.stringify(o.errors));
+  const a = n => ({ abi: o.contracts["a5.sol"][n].abi, bytecode: "0x" + o.contracts["a5.sol"][n].evm.bytecode.object });
+  return (A5ART = { COLDSAFE: a("ColdSafe"), DRAINER: a("SafeDrainer") });
+}
+// A5's human multisig owners (they only sign hashes, never send) and the signer service's co-signing key.
+const A5K = Object.fromEntries(["owner1", "owner2", "owner3", "cosigner"].map(l => [l, privateKeyToAccount(keccak256(toHex("sigsim:a5:" + l)))]));
+const COLD_SAFE_USDT = 1_460_000_000n; // sized on the Bybit cold wallet (USD 1.46B, Feb 2025); held as USDT, see A5 notes
 
 // ---------- clients ----------
 const pub = createPublicClient({ chain, transport, cacheTime: 0, pollingInterval: 250 });
@@ -205,6 +221,7 @@ class Signer {
     this.cfg = cfg; this.ia = ia; this.onAlert = onAlert;
     this.keys = { [K.hot14.address]: K.hot14, [K.hot16.address]: K.hot16, [K.hotB.address]: K.hotB };
     this.frozen = false; this.used = new Set(); this.window = []; this.denials = {};
+    this.safes = {}; // multisig wallet -> the co-signing key S holds for it (attacker A5)
   }
   deny(reason, who) { const k = `${who}:${reason}`; this.denials[k] = (this.denials[k] || 0) + 1; return { ok: false, reason }; }
   decode(req) {
@@ -220,7 +237,7 @@ class Signer {
   }
   async request(req, ctx) {
     const who = ctx.who;
-    const key = this.keys[req.wallet];
+    const key = req.kind === "safetx" ? this.safes[req.wallet] : this.keys[req.wallet];
     if (!key) return this.deny("unknown-wallet", who);
     // Break-glass revocation: only the independent watcher/SOC path, only to the zero address.
     if (req.kind === "auth7702" && ctx.role === "breakglass" && req.delegate === zeroAddress) {
@@ -232,12 +249,16 @@ class Signer {
       if (C.semantic) { this.onAlert?.("signer:auth7702-requested", who); return this.deny("type-not-allowed", who); }
       return { ok: true, auth: await key.signAuthorization({ chainId: CHAIN_ID, contractAddress: req.delegate, nonce: req.nonce }) };
     }
-    // req.kind === "tx"
+    // req.kind === "tx", or "safetx": S's co-signature on a multisig transaction (to, value, data, operation, nonce).
+    // S decodes the payload itself, so what the human owners were shown plays no part. Only a CALL that decodes
+    // to a transfer passes; a DELEGATECALL runs foreign code as the wallet and is denied, like any other call.
+    const safe = req.kind === "safetx";
     let d = null;
     if (C.semantic) {
-      d = this.decode(req);
+      d = safe && req.operation !== 0 ? null : this.decode(req);
       if (!d) return this.deny("undecodable", who);
-      const next = await pending(req.wallet);
+      // A multisig's window starts at its executed nonce: S cannot see co-signed transactions that are not yet mined.
+      const next = safe ? Number(await pub.readContract({ address: req.wallet, abi: a5Art().COLDSAFE.abi, functionName: "nonce" })) : await pending(req.wallet);
       if (req.nonce < next || req.nonce >= next + C.nonceWindow) return this.deny("nonce-window", who);
       const usd = usdOf(d.asset, d.amount);
       if (usd > C.perTxUsd) return this.deny("escalate-manual", who);
@@ -257,6 +278,10 @@ class Signer {
         this.used.add(i.id);
       }
       this.window.push({ block: now, usd });
+    }
+    if (safe) {
+      const hash = await pub.readContract({ address: req.wallet, abi: a5Art().COLDSAFE.abi, functionName: "txHash", args: [req.to, req.value, req.data, req.operation, BigInt(req.nonce)] });
+      return { ok: true, sig: await key.sign({ hash }), hash };
     }
     const raw = await key.signTransaction({ chainId: CHAIN_ID, type: "eip1559", to: req.to, value: req.value || 0n, data: req.data || "0x", nonce: req.nonce, gas: req.gas, ...(req.fees || FEES) });
     return { ok: true, raw };
@@ -303,6 +328,10 @@ async function run({ name, cfg, attacker, seed = 7 }) {
   const signer = new Signer(cfg, ia, alert);
   const treasury = [K.hot14.address, K.hot16.address, K.hotB.address].map(a => getAddress(a));
   const watched = new Set([...treasury, getAddress(W.safe34)]);
+  // A5 only: a 2-of-3 multisig cold wallet whose transactions also need S's co-signature. The watcher reconciles
+  // its token outflows like any treasury wallet's.
+  const a5 = attacker?.kind === "blindsign" ? await setupColdSafe() : null;
+  if (a5) { signer.safes[a5.safe] = A5K.cosigner; watched.add(a5.safe); }
   const benign = { requested: 0, completed: 0, escalated: 0, blocked: 0, paused: 0 };
   const benignTx = [];   // [hash, t, wallet, asset, amount] for every signed-and-accepted benign withdrawal
   const trace = [];      // TRACE=1: per-step balances, to locate where two runs diverge
@@ -311,6 +340,8 @@ async function run({ name, cfg, attacker, seed = 7 }) {
   // Counters for the mempool-aware attackers (A3r, A9); absent for the others, so their results are unchanged.
   if (attacker?.replaceStalled || attacker?.prequeue) Object.assign(atk, { ops: { replacements: 0, replaceDenied: 0, replaceRejected: 0,
     prequeued: 0, prequeueDenied: 0, prequeueRejected: 0 }, stall: {}, noQueue: {} });
+  if (attacker?.kind === "drip") atk.ops = { drips: 0, dripDenied: 0, pausedSteps: 0 };
+  if (attacker?.kind === "blindsign") atk.ops = { delegatecall: null, transfers: 0, cosignDenied: 0, execFailed: 0 };
   let prevBal = {}; for (const a of treasury) prevBal[a] = (await bal(a)).ETH;
   let lastScanned = await pub.getBlockNumber();
   const delegatedBlocks = { count: 0 };
@@ -439,6 +470,75 @@ async function run({ name, cfg, attacker, seed = 7 }) {
     }
     log.push([tNow, `attacker: holding ${atk.hoard.length} signed transfers from ${w.slice(0, 8)} unsent`]);
   }
+  // A8: drips transfers small enough that no budget ever trips. Per block it asks for at most (B - 2b)/T, and never
+  // lets the signed total of the current window rise above B - 2b, which leaves room for the at most two customer
+  // withdrawals (each <= b) of the next block. The attacker controls orchestration, so it sees every signing request
+  // and reconstructs the window exactly; the code reads the signer's record, which is equivalent. Without budgets
+  // (R0, R2) it keeps the same rate. Source: the hot wallet holding the most USDT.
+  async function drip() {
+    const B = cfg.windowUsd || 25_000_000, T = cfg.windowBlocks || 300, R = 2 * (cfg.perTxUsd || 1_000_000);
+    const used = signer.window.filter(w => w.block > tNow - T).reduce((s, w) => s + w.usd, 0);
+    const usd = Math.floor(Math.min((B - R) / T, B - R - used));
+    if (usd < 1_000) { atk.ops.pausedSteps++; return; }
+    let w = null, most = -1n;
+    for (const a of [K.hot14.address, K.hot16.address, K.hotB.address]) { const u = (await bal(a)).USDT; if (u > most) { most = u; w = a; } }
+    const ask = BigInt(usd) * E18;
+    if (most < ask) { atk.ops.pausedSteps++; return; }
+    const intent = attacker.mintIntents ? await ia.issue(w, "USDT", getAddress(K.hub.address), ask, "attacker") : undefined;
+    const nonce = await pending(w);
+    const res = await signer.request({ kind: "tx", wallet: w, to: W.usdt, value: 0n, data: encodeFunctionData({ abi: TRANSFER_ABI, functionName: "transfer", args: [K.hub.address, ask] }), nonce, gas: 100_000n, intent }, ctxA());
+    if (!res.ok) { atk.ops.dripDenied++; return; }
+    await send(res.raw, w, nonce); atk.ops.drips++; atk.vectors.drip = (atk.vectors.drip || 0) + usd;
+  }
+  // A5: blind signing at the multisig cold wallet (Bybit, WazirX, Radiant). The attacker controls what the human
+  // owners are shown. At t0 they approve what looks like a routine USD 1M cold-to-hot transfer, for which the quorum
+  // also issued a genuine intent, but the hash they sign is a DELEGATECALL to the attacker's drainer. The owners'
+  // display is not modelled: they sign the hash they are handed. If S refuses to co-sign, the attacker falls back to
+  // capped USDT transfers from the multisig to itself, with fresh owner signatures, every block (like A3).
+  async function safeExec({ to, value = 0n, data, operation, intent }) {
+    const { COLDSAFE } = a5Art();
+    const n = Math.max(Number(await pub.readContract({ address: a5.safe, abi: COLDSAFE.abi, functionName: "nonce" })), a5.next);
+    const res = await signer.request({ kind: "safetx", wallet: a5.safe, to, value, data, operation, nonce: n, intent }, ctxA());
+    if (!res.ok) { atk.ops.cosignDenied++; return false; }
+    const owners = [A5K.owner1, A5K.owner2, A5K.owner3].sort((x, y) => (BigInt(x.address) < BigInt(y.address) ? -1 : 1)).slice(0, 2);
+    const sigs = "0x" + [...(await Promise.all(owners.map(o => o.sign({ hash: res.hash })))), res.sig].map(x => x.slice(2)).join("");
+    const h = await txFrom(K.op, { to: a5.safe, data: encodeFunctionData({ abi: COLDSAFE.abi, functionName: "execTransaction", args: [to, value, data, operation, sigs] }), gas: 400_000n });
+    if (!h) { atk.ops.execFailed++; return false; }
+    a5.next = n + 1;
+    return true;
+  }
+  async function blindSign() {
+    if (tNow === 0) {
+      atk.routine = await ia.issue(a5.safe, "USDT", getAddress(K.hot14.address), 1_000_000n * E18, "quorum");
+      const before = usdTotal(await bal(a5.safe));
+      const data = encodeFunctionData({ abi: a5Art().DRAINER.abi, functionName: "drain", args: [[W.usdt, W.usdc], K.hub.address] });
+      atk.ops.delegatecall = (await safeExec({ to: a5.drainer, data, operation: 1, intent: atk.routine })) ? "executed" : "refused";
+      if (atk.ops.delegatecall === "executed") { atk.vectors.delegatecall = before; log.push([tNow, "attacker: multisig drained by DELEGATECALL"]); return; }
+      log.push([tNow, "attacker: co-signature for the DELEGATECALL refused; switching to capped transfers"]);
+    }
+    if (atk.ops.delegatecall !== "refused" || state.attackerCut) return;
+    const cap = BigInt(cfg.perTxUsd || 1_000_000) * E18;
+    for (let k = 0; k < 40; k++) {
+      const left = (await bal(a5.safe)).USDT;
+      if (left === 0n) return;
+      const ask = left < cap ? left : cap;
+      // Without the intent authority the attacker can only attach the routine intent it has, which names hot14.
+      const intent = attacker.mintIntents ? await ia.issue(a5.safe, "USDT", getAddress(K.hub.address), ask, "attacker") : atk.routine;
+      const data = encodeFunctionData({ abi: TRANSFER_ABI, functionName: "transfer", args: [K.hub.address, ask] });
+      if (!(await safeExec({ to: W.usdt, data, operation: 0, intent }))) return;
+      atk.ops.transfers++; atk.vectors.transfer = (atk.vectors.transfer || 0) + usdOf("USDT", ask);
+    }
+  }
+  async function setupColdSafe() {
+    const { COLDSAFE, DRAINER } = a5Art();
+    const deploy = async (acc, c, args) => getAddress((await pub.waitForTransactionReceipt({ hash: await wallet(acc).deployContract({ ...c, args, ...FEES }) })).contractAddress);
+    const safe = await deploy(K.deployer, COLDSAFE, [[A5K.owner1, A5K.owner2, A5K.owner3].map(a => a.address), 2n, A5K.cosigner.address]);
+    const drainer = await deploy(K.op, DRAINER, []);
+    const h = await txFrom(K.deployer, { to: W.usdt, data: encodeFunctionData({ abi: STABLE.abi, functionName: "mint", args: [safe, COLD_SAFE_USDT * E18] }), gas: 120_000n });
+    const rc = await pub.waitForTransactionReceipt({ hash: h });
+    if (rc.status !== "success") throw new Error("A5 set-up: mint to the multisig failed");
+    return { safe, drainer, next: 0 };
+  }
   async function delegated() { const c = await pub.getCode({ address: K.hot14.address }); return c && c.toLowerCase().includes(W.sweeper.slice(2).toLowerCase()); }
   async function ensureDelegation() {
     if (await delegated()) return true;
@@ -490,7 +590,7 @@ async function run({ name, cfg, attacker, seed = 7 }) {
     }
     // --- attacker schedule (offsets from the incident)
     if (attacker && !state.attackerCut) {
-      if (tNow === -16 && attacker.kind !== "aware" && attacker.kind !== "hoard") {
+      if (tNow === -16 && !["aware", "hoard", "drip", "blindsign"].includes(attacker.kind)) {
         const N = await pending(K.hot14.address);
         for (let i = 0; i < 50; i++) {
           const res = await signer.request({ kind: "auth7702", wallet: K.hot14.address, delegate: W.sweeper, nonce: N + i }, ctxA());
@@ -516,6 +616,10 @@ async function run({ name, cfg, attacker, seed = 7 }) {
           log.push([tNow, `attacker: sent ${atk.hoard.length} held transfers`]);
         }
         if (tNow >= release) for (const w of [K.hot14.address, K.hot16.address, K.hotB.address]) await plainDrain(w, true);
+      } else if (atk.mode === "drip") {
+        if (tNow >= 0) await drip();
+      } else if (atk.mode === "blindsign") {
+        if (tNow >= 0) await blindSign();
       } else if (atk.mode !== "adaptive") {
         if (tNow === 0 && atk.auths.length) {
           const atomic = attacker.kind === "blitz";
@@ -650,6 +754,10 @@ const ATK = {
   A9: { label: "A9 Mempool-aware (cap-sized native transfers kept queued beyond the balance)", kind: "aware", prequeue: true },
   A10: { label: "A10 Hoarding (holds one nonce window of signatures past the budget window, then drains)", kind: "hoard" },
   A10i: { label: "A10i Hoarding + intent authority also compromised", kind: "hoard", mintIntents: true },
+  A5: { label: "A5 Blind signing at a 2-of-3 multisig cold wallet (owners shown a routine transfer, sign a DELEGATECALL drain)", kind: "blindsign" },
+  A5i: { label: "A5i Blind signing + the quorum also approves attacker intents", kind: "blindsign", mintIntents: true },
+  A8: { label: "A8 Drip (below every budget: at most (B - 2b)/T per block)", kind: "drip" },
+  A8i: { label: "A8i Drip + intent authority also compromised", kind: "drip", mintIntents: true },
 };
 
 let unhandled = 0;
@@ -669,6 +777,9 @@ for (const c of ["R0", "R1", "R2", "R3", "R4"]) for (const a of ["A3r", "A9"]) p
 // Hoarding (bound T3): signatures held across a budget window.
 for (const c of ["R1", "R3", "R4"]) plan.push([c, "A10"]);
 plan.push(["R4", "A10i"]);
+// Blind signing at a multisig (A5) and below-threshold drip (A8).
+for (const c of ["R0", "R1", "R2", "R3", "R4"]) for (const a of ["A5", "A8"]) plan.push([c, a]);
+plan.push(["R4", "A5i"], ["R4", "A8i"]);
 if (only === "--list") {
   console.log(JSON.stringify({
     configs: Object.fromEntries(Object.entries(CFG).map(([k, v]) => [k, v.label])),

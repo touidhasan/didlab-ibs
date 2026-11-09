@@ -105,10 +105,10 @@ incidents (they are counterfactual replays). That results hold for other clients
 |---|---|---|
 | Orchestration control | Submit any request to S at any time; read all internal state; choose timing | A1 Binance-paced replay, A2 atomic blitz, A3 policy-aware plain transfers |
 | Intent-authority compromise | Mint valid intents to attacker addresses | A4 |
-| Display or payload tampering at human signers | Show one payload, sign another | A5 blind-signing multisig (planned; Bybit/WazirX/Radiant) |
+| Display or payload tampering at human signers | Show one payload, sign another | A5 blind signing at a 2-of-3 multisig with S as co-signer (Bybit/WazirX/Radiant); A5i also gets attacker intents approved |
 | Stolen key used directly | Sign without S | A6 bridge validator key (planned; Ronin/Harmony); detection only |
-| Below-threshold drip | Stay under budgets for a long time | A8 (planned) |
-| Mempool-aware | Exploit client queueing: pre-queue transfers that become valid on replenishment; replace stalled nonces | A9 and A3r (planned; motivated by E8) |
+| Below-threshold drip | Stay under budgets for a long time | A8: at most $(B - 2b)/T$ per block, never tripping a budget; A8i with IA compromised |
+| Mempool-aware | Exploit client queueing: pre-queue transfers that become valid on replenishment; replace stalled nonces | A9 and A3r (motivated by E8) |
 | Consumer-style 7702 phishing | Trick a human into signing a delegation | A7 (planned) |
 
 **How the threat model is validated.** Every catalog incident is coded with its authorization type and
@@ -168,9 +168,9 @@ On an alarm at block $k$: $f \leftarrow 1$ and replenishment halts, effective fr
 |---|---|---|---|---|
 | T1 | **Intent soundness.** Every transfer S signs matches, one-to-one, a distinct IA-issued intent with identical fields. | A-sig, A-key, A-dec | Reduction: a signed transfer without a matching fresh intent yields an IA forgery (contradicts EUF-CMA), or reuses an id (contradicts $U$). Equality of fields plus A-dec gives the effect. | R4 vs A1–A3: USD 0 loss on Hardhat and Besu; 6 no-intent denials in R4-A3 |
 | T2 | **No delegation.** No treasury account ever carries delegated code. | A-key, rule 2 | Induction over blocks: a 7702 designator needs an authorization signed by $w$'s key; only S holds it, and S signs only zero-address revocations. | Delegated blocks = 0 in R1, R3, R4 (R0-A1/A2: 1,149) |
-| T3 | **Exposure bound.** Signed outflow over any horizon $H$ satisfies $\mathit{Loss} \le B\lceil H/T\rceil$, even if IA is compromised. When every attacker outflow raises an alarm (C4 reconciles against an intact IA) and there is no unfreeze, $\mathit{Loss} \le B + W\nu b$ for $W$ hot wallets. *Revised 2026-11-05:* the earlier claim $\mathit{Loss} \le B$ ignored signatures held unsent across a window (attacker A10). Charging outstanding signatures to the budget until they execute would restore $\mathit{Loss} \le B$ (design option, not yet evaluated). | Rules 4–6; alarm triggers C4 | Any $T$ consecutive blocks carry at most $B$ of signatures (rule 6); partition $[0,H]$ into $\lceil H/T\rceil$ windows. Containment acts at the end of the first block with an attacker outflow. By then the attacker has spent at most $B$ signed in the current window, plus signatures held from earlier windows. Those are at most $\nu$ per wallet, since the nonce window starts at the pending nonce and held signatures do not advance it. | $B$ = USD 25M, $T$ = 300, $H$ = 1,200 ⇒ USD 100M: R1 USD 95.8M (all attackers, both backends). Single-incident: R3-A3, R4-A4, R4t-A4 all USD 24.0M. A10 (hoarding) on Hardhat (`testbed/results/2026-11-09-hoarding/`): R3-A10 and R4-A10i USD 22.0M, of which USD 4.0M was signed in an earlier window; R1-A10 USD 72.9M; R4-A10 USD 0; this is below USD 25M only because legitimate withdrawals used about USD 7M of the fresh window, and the revised bound is USD 25M + 3·4·USD 1M = USD 37M. With early unfreeze: R3p-A1/A3 and R4p-A4 USD 97.8–98.8M ≤ USD 100M |
+| T3 | **Exposure bound.** Signed outflow over any horizon $H$ satisfies $\mathit{Loss} \le B\lceil H/T\rceil$, even if IA is compromised. When every attacker outflow raises an alarm (C4 reconciles against an intact IA) and there is no unfreeze, $\mathit{Loss} \le B + W\nu b$ for $W$ hot wallets. *Revised 2026-11-05:* the earlier claim $\mathit{Loss} \le B$ ignored signatures held unsent across a window (attacker A10). Charging outstanding signatures to the budget until they execute would restore $\mathit{Loss} \le B$ (design option, not yet evaluated). | Rules 4–6; alarm triggers C4 | Any $T$ consecutive blocks carry at most $B$ of signatures (rule 6); partition $[0,H]$ into $\lceil H/T\rceil$ windows. Containment acts at the end of the first block with an attacker outflow. By then the attacker has spent at most $B$ signed in the current window, plus signatures held from earlier windows. Those are at most $\nu$ per wallet, since the nonce window starts at the pending nonce and held signatures do not advance it. | $B$ = USD 25M, $T$ = 300, $H$ = 1,200 ⇒ USD 100M: R1 USD 95.8M (all attackers, both backends). Single-incident: R3-A3, R4-A4, R4t-A4 all USD 24.0M. A10 (hoarding) on Hardhat (`testbed/results/2026-11-09-hoarding/`): R3-A10 and R4-A10i USD 22.0M, of which USD 4.0M was signed in an earlier window; R1-A10 USD 72.9M; R4-A10 USD 0; this is below USD 25M only because legitimate withdrawals used about USD 7M of the fresh window, and the revised bound is USD 25M + 3·4·USD 1M = USD 37M. With early unfreeze: R3p-A1/A3 and R4p-A4 USD 97.8–98.8M ≤ USD 100M. A5: R1 USD 96.0M, R3 and R4-A5i USD 24.0M. A8: R1 and R4-A8i USD 76.8M, no alarm (development runs) |
 | T4 | **Containment latency.** An outflow not authorized through S is detected at the block it is included in, and S is frozen from the next block. | Watcher liveness, independent node | Direct from the watcher loop; latency = one block + processing. | Besu, 2 s blocks: R2 detect/contain 2.04/2.05 s; R3-A3, R4-A3 alert ≤ 0.06 s, contain ≤ 2.00 s |
-| T5 | **Impossibility (negative result).** No detector that reacts to included blocks can bound the loss of a drain executed atomically in one block. | Any post-inclusion detector | Causality: the detector's first observation is the block that already contains the drain. Hence pre-sign controls (T1, T2) are *necessary* for atomic attacks. | R2-A2, R2-A3: contained in one block, USD 2,209.7M lost; R3/R4 vs A1/A2: USD 0 |
+| T5 | **Impossibility (negative result).** No detector that reacts to included blocks can bound the loss of a drain executed atomically in one block. | Any post-inclusion detector | Causality: the detector's first observation is the block that already contains the drain. Hence pre-sign controls (T1, T2) are *necessary* for atomic attacks. | R2-A2, R2-A3: contained in one block, USD 2,209.7M lost; R3/R4 vs A1/A2: USD 0. A5 (one DELEGATECALL from a multisig): R2 USD 1,460M, R3/R4 USD 0 from the DELEGATECALL, which S refuses to co-sign (development runs) |
 | T6 | **Liveness.** With no attack, every benign request whose intent is valid and which respects $b$ and $B$ is signed. | IA available | Direct from the decision rule. | R4-benign: 726 of the 727 requests made while withdrawals were open were signed; 1 escalated (above $b$ = USD 1M) |
 | T7 | **Budget non-exhaustion.** Requests without a valid intent never consume budget, so an attacker without IA cannot deny service through the budget. | Rule order: budget is charged only on signing | Only signed transfers enter the window sum. | R4t vs A1–A3: 726 legitimate withdrawals completed, USD 0 loss. R1 (no C1): only 268 completed, 458 blocked |
 
@@ -186,7 +186,19 @@ On an alarm at block $k$: $f \leftarrow 1$ and replenishment halts, effective fr
 
 **The bounds are tested, not just asserted.** Observed losses sit 1–5% below each bound (T3), so the bounds
 are tight for the scripted attackers. Adaptive attackers test them further. A10 (hoarding) already forced a
-correction: the single-incident bound is $B + W\nu b$, not $B$. A8 (drip) and A9 (mempool-aware) come next.
+correction: the single-incident bound is $B + W\nu b$, not $B$.
+
+**A8 shows what the single-incident bound needs: an alarm.** A drip that stays under every budget raises none.
+- With budgets alone (R1), A8 took USD 76.8M with zero alerts and no customer withdrawal blocked. A3 took USD 95.8M
+  but raised 4,263 alerts and blocked 458 withdrawals.
+- With full IBS (R4), A8 is stopped at the first request, which has no intent. The watcher configurations (R2, R3)
+  contain it after the first drip (USD 0.08M).
+- With the intent authority compromised (R4-A8i), nothing alarms before the manual response. The loss, USD 76.8M, is
+  bounded only by $B\lceil H/T\rceil$ = USD 100M.
+
+So with IA compromised, a patient attacker gets the multi-window bound, not $B + W\nu b$. Detection then has to come
+from the intent authority's side (A-ia), for example a quorum or a rate limit on new destinations. These figures
+are development runs at seed 7; the recorded campaign is pending.
 
 ## 7. Experimental evaluation
 
@@ -299,7 +311,7 @@ correction: the single-incident bound is $B + W\nu b$, not $B$. A8 (drip) and A9
 
 1. ~~Finish the Hardhat multi-seed campaign; report seed variance (closes E5).~~ Done 2026-11-04 at 10 seeds: the seed changes no outcome, and every configuration contrast is either significant (p ≈ 0.002) or identical at every seed (`testbed/results/2026-11-04-hardhat-10seeds/`). Start-up crashes are retried automatically; their cause is open (E14).
 2. Read the probe result; decide on the upstream report.
-3. Add attackers A3r and A9, then A5 and A8; run them on both backends. A3r and A9 done (2026-11-07): the fixed A3r closes the R0-A3 Besu gap to 0.012%, and A9's queue on Besu mostly starves customers. A10 (hoarding) revised T3. Next: A5 and A8.
+3. Add attackers A3r and A9, then A5 and A8; run them on both backends. A3r and A9 done (2026-11-07): the fixed A3r closes the R0-A3 Besu gap to 0.012%, and A9's queue on Besu mostly starves customers. A10 (hoarding) revised T3 and was recorded on 2026-11-09. A5 and A8 built on 2026-11-09 (development runs above); next, record them on Hardhat and Besu at seed 7.
 4. Write the TLA+ model for T2, T3 and T6; draft the T1 reduction.
 5. Verify the ≥$100M pending catalog candidates first; code all incidents for RQ5.
 6. Public hot-wallet traffic: data pull, distribution fit, budget false-positive analysis.

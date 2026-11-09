@@ -41,6 +41,16 @@ jobs:
             const same = x => ["lossUsd", "benign", "signerDenials"].every(k => JSON.stringify(x[k]) === JSON.stringify(a[k]));
             console.log(a.lossUsd, r.lossUsd, q.lossUsd, r.attackerOps, q.attackerOps);
             if (!same(r) || !same(q) || r.attackerOps.replacements !== 0 || q.attackerOps.prequeueRejected !== 3) process.exit(1)'
+      - name: A5 (blind signing at a multisig) and A8 (drip below the budgets)
+        working-directory: testbed
+        run: |
+          for s in R0-A5 R4-A5 R1-A8; do HORIZON=40 OUT=/tmp/$s.json node sim.mjs =$s; done
+          node -e '
+            const [d, f, p] = ["R0-A5", "R4-A5", "R1-A8"].map(s => require(`/tmp/${s}.json`).results[0]);
+            console.log(d.attackerOps, f.signerDenials, p.attackerOps, p.alertsDuringAttack);
+            if (d.attackerOps.delegatecall !== "executed" || d.lossUsd !== 1460000000) process.exit(1);
+            if (f.attackerOps.delegatecall !== "refused" || f.lossUsd !== 0 || !f.signerDenials["attacker:undecodable"]) process.exit(1);
+            if (!(p.attackerOps.drips > 0) || p.alertsDuringAttack !== 0 || p.benign.blocked !== 0) process.exit(1)'
       - name: Install research-net smoke test
         working-directory: research-net
         run: npm ci

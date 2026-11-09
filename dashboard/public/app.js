@@ -62,6 +62,7 @@ async function refreshStatus() {
 // ---------- campaigns ----------
 const CORE = ["R0", "R1", "R2", "R3", "R4"].flatMap(c => ["A1", "A2", "A3"].map(a => `${c}-${a}`));
 const MEMPOOL = ["R0", "R1", "R2", "R3", "R4"].flatMap(c => ["A3r", "A9"].map(a => `${c}-${a}`)); // mempool-aware attackers
+const CP3 = [...["R0", "R1", "R2", "R3", "R4"].flatMap(c => ["A5", "A8"].map(a => `${c}-${a}`)), "R4-A5i", "R4-A8i"]; // blind signing, drip
 function buildPicker() {
   const box = $("#run-picker"); box.replaceChildren();
   for (const id of state.catalog.runs) box.append(el("label", { title: describe(id) }, el("input", { type: "checkbox", value: id }), id));
@@ -72,7 +73,7 @@ function describe(id) {
   return `${state.catalog.configs[c] || c}\n${a === "benign" ? "No attacker (benign traffic only)" : state.catalog.attackers[a] || a}`;
 }
 for (const b of document.querySelectorAll("[data-sel]")) b.addEventListener("click", () => {
-  const pick = { core: CORE, mempool: MEMPOOL }[b.dataset.sel];
+  const pick = { core: CORE, mempool: MEMPOOL, cp3: CP3 }[b.dataset.sel];
   for (const cb of document.querySelectorAll("#run-picker input")) cb.checked = b.dataset.sel === "all" || !!pick?.includes(cb.value);
   estimate();
 });
