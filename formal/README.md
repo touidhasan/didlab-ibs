@@ -28,6 +28,17 @@ Because the tag is a moving nightly, a rerun should record the jar's sha256. All
 reachable states are the customers' withdrawals and the alarms. Run times: R4-A4 5 min 21 s, R1 2 min 23 s,
 R3 47 s, the rest under 10 s.
 
+**Added 2026-11-10, not yet checked: the hoarding fix.** The constant `ChargeOutstanding` makes the budget count
+a transaction signature while it is unexecuted, and for T blocks after it executes (variable `done`). Three
+configurations use it, and all are expected to pass:
+- `R3h` checks the old bound Loss ≤ B (`T3c_ContainedWithoutHoarding`), which `R3-hoarding` violates without the
+  fix, together with T2, T3a, T3b and T4.
+- `R4h` checks the R4 properties plus the same bound.
+- `Benign-h` checks that the fix refuses no customer (T6, T7).
+
+Every earlier configuration sets `ChargeOutstanding = FALSE`. There, `done` stays empty, so their state counts
+should not change. A rerun with `check.sh` will show that.
+
 The two counterexamples (`results/2026-11-05-tlc/`):
 - **R2 (T5).** In block 0 the attacker gets a transfer of 3 signed, broadcasts it, and it executes. The loss is 3
   before the block ends and before the watcher can act.

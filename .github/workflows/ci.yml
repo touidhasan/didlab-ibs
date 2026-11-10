@@ -51,6 +51,14 @@ jobs:
             if (d.attackerOps.delegatecall !== "executed" || d.lossUsd !== 1460000000) process.exit(1);
             if (f.attackerOps.delegatecall !== "refused" || f.lossUsd !== 0 || !f.signerDenials["attacker:undecodable"]) process.exit(1);
             if (!(p.attackerOps.drips > 0) || p.alertsDuringAttack !== 0 || p.benign.blocked !== 0) process.exit(1)'
+      - name: Hoarding fix (R3h) keeps A10 within one budget
+        working-directory: testbed
+        run: |
+          for s in R3-A10 R3h-A10; do HORIZON=320 OUT=/tmp/$s.json node sim.mjs =$s; done
+          node -e '
+            const [o, h] = ["R3-A10", "R3h-A10"].map(s => require(`/tmp/${s}.json`).results[0]);
+            console.log(o.attackerVectors, h.attackerVectors);
+            if (!(h.lossUsd < o.lossUsd) || h.attackerVectors.hoard !== 4000000) process.exit(1)'
       - name: Install research-net smoke test
         working-directory: research-net
         run: npm ci

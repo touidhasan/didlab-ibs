@@ -29,6 +29,8 @@ CONSTANTS
     Tiered,         \* soft alerts (EIP-7702 request, missing intent) do not freeze (configuration R4t)
     Attacker,       \* the attacker controls the request builder
     IACompromised,  \* the attacker can also have the intent authority sign intents (attacker A4)
+    ChargeOutstanding, \* design fix (R3h, R4h): the budget also counts unexecuted signatures, and executed
+                    \* ones for T blocks after they execute
     B, T,           \* budget per sliding window of T blocks
     Cap, Nu,        \* per-transaction cap, nonce window
     H,              \* last block of the horizon
@@ -36,7 +38,7 @@ CONSTANTS
     MaxV,           \* value of the attacker's over-cap request (MaxV > Cap tests rule 5)
     Sweep           \* value drained per block through delegated code
 
-ASSUME /\ B \in Nat /\ T \in Nat \ {0} /\ Cap \in Nat \ {0} /\ Nu \in Nat \ {0}
+ASSUME /\ B \in Nat /\ T \in Nat \ {0} /\ Cap \in Nat \ {0} /\ Nu \in Nat \ {0} /\ ChargeOutstanding \in BOOLEAN
        /\ H \in Nat /\ MaxOps \in Nat /\ MaxV \in Nat /\ Sweep \in Nat
        /\ T <= B   \* legitimate traffic (at most 1 unit per block) fits in every window
 
@@ -58,13 +60,14 @@ VARIABLES
     signed,       \* signatures given: set of [k, kind, n, to, v, id, b, src]; k is a serial number
     bcast,        \* serial numbers of signed transactions that have been broadcast
     executed,     \* serial numbers of signatures executed, or invalidated (nonce used, authorization revoked)
+    done,         \* with ChargeOutstanding: [k, b] for each transaction signature executed or invalidated in block b
     mined,        \* next nonce the chain executes
     delegated,    \* an EIP-7702 delegation is in force at the treasury
     loss,         \* value moved to the attacker
     refusals      \* reasons for which a legitimate request was refused
 
 vars == << t, ops, userDone, swept, frozen, alarm, unexplained, ledger, used, signed, bcast,
-           executed, mined, delegated, loss, refusals >>
+           executed, done, mined, delegated, loss, refusals >>
 
 ----------------------------------------------------------------------------
 RECURSIVE SumV(_)
@@ -78,8 +81,13 @@ FirstFree(m, S) == IF m \in S THEN FirstFree(m + 1, S) ELSE m
 Inflight == {s.n : s \in {x \in signed : x.kind = "tx" /\ x.k \in bcast /\ x.k \notin executed}}
 Pending == FirstFree(mined, Inflight)
 
-\* Value of transactions signed in the window of T blocks that ends at block b.
-WindowAt(b) == SumV({s \in signed : s.kind = "tx" /\ s.b + T > b /\ s.b <= b})
+\* Value charged to the budget in the window of T blocks that ends at block b: transactions signed in it, and with
+\* ChargeOutstanding also those signed earlier that had not executed T blocks before b (still unexecuted, or
+\* executed within the window).
+Charged(s, b) == /\ s.b <= b
+                 /\ \/ s.b + T > b
+                    \/ ChargeOutstanding /\ (s.k \notin executed \/ \E d \in done : d.k = s.k /\ d.b + T > b)
+WindowAt(b) == SumV({s \in signed : s.kind = "tx" /\ Charged(s, b)})
 
 \* An intent in ledger L authorizes exactly this destination and value.
 Matches(L, r) == \E i \in L : i.id = r.id /\ i.to = r.to /\ i.v = r.v
@@ -117,7 +125,7 @@ Ask(r, L, sendNow) ==
 Init ==
     /\ t = 0 /\ ops = 0 /\ userDone = FALSE /\ swept = FALSE
     /\ frozen = FALSE /\ alarm = FALSE /\ unexplained = FALSE
-    /\ ledger = {} /\ used = {} /\ signed = {} /\ bcast = {} /\ executed = {}
+    /\ ledger = {} /\ used = {} /\ signed = {} /\ bcast = {} /\ executed = {} /\ done = {}
     /\ mined = 0 /\ delegated = FALSE /\ loss = 0 /\ refusals = {}
 
 \* A customer's withdrawal: the authority signs an intent, the pipeline asks the signer and broadcasts.
@@ -128,7 +136,7 @@ UserWithdrawal ==
        IN /\ ledger' = ledger \cup {i}
           /\ Ask(r, ledger \cup {i}, TRUE)
     /\ userDone' = TRUE
-    /\ UNCHANGED << t, ops, swept, frozen, unexplained, executed, mined, delegated, loss >>
+    /\ UNCHANGED << t, ops, swept, frozen, unexplained, executed, done, mined, delegated, loss >>
 
 \* Attacker A4: the compromised intent authority signs an intent for the attacker.
 AttackerIntent ==
@@ -136,7 +144,7 @@ AttackerIntent ==
     /\ ledger' = ledger \cup {[id |-> Cardinality(ledger) + 1, to |-> Hub, v |-> Cap, src |-> "attacker"]}
     /\ ops' = ops + 1
     /\ UNCHANGED << t, userDone, swept, frozen, alarm, unexplained, used, signed, bcast, executed,
-                    mined, delegated, loss, refusals >>
+                    done, mined, delegated, loss, refusals >>
 
 \* Intent ids the attacker presents: its own (A4), none, forged, and one customer's (replay or mismatch).
 UserIds == {i.id : i \in {j \in ledger : j.src = "user"}}
@@ -152,7 +160,7 @@ AttackerSign ==
             Ask([kind |-> "tx", n |-> n, to |-> Hub, v |-> v, id |-> id, src |-> "attacker"], ledger, FALSE)
        \/ Ask([kind |-> "auth", n |-> Pending, to |-> Hub, v |-> 0, id |-> NoIntent, src |-> "attacker"], ledger, FALSE)
     /\ ops' = ops + 1
-    /\ UNCHANGED << t, userDone, swept, frozen, unexplained, ledger, executed, mined, delegated, loss >>
+    /\ UNCHANGED << t, userDone, swept, frozen, unexplained, ledger, executed, done, mined, delegated, loss >>
 
 \* The attacker broadcasts a signature it held.
 AttackerSend ==
@@ -160,13 +168,16 @@ AttackerSend ==
     /\ \E s \in signed : /\ s.src = "attacker" /\ s.kind = "tx" /\ s.k \notin bcast /\ s.k \notin executed
                          /\ bcast' = bcast \cup {s.k}
     /\ UNCHANGED << t, ops, userDone, swept, frozen, alarm, unexplained, ledger, used, signed, executed,
-                    mined, delegated, loss, refusals >>
+                    done, mined, delegated, loss, refusals >>
 
 \* The chain executes the broadcast transaction with the next nonce; other signatures for that nonce die.
 Execute ==
     /\ \E s \in signed :
          /\ s.kind = "tx" /\ s.k \in bcast /\ s.k \notin executed /\ s.n = mined
          /\ executed' = executed \cup {x.k : x \in {y \in signed : y.kind = "tx" /\ y.n = s.n}}
+         /\ done' = IF ChargeOutstanding
+                      THEN done \cup {[k |-> x.k, b |-> t] : x \in {y \in signed : y.kind = "tx" /\ y.n = s.n}}
+                      ELSE done
          /\ mined' = mined + 1
          /\ loss' = IF s.to = Hub THEN loss + s.v ELSE loss
          /\ unexplained' = (unexplained \/ ~Matches(ledger, s))
@@ -178,13 +189,13 @@ Delegate ==
                          /\ executed' = executed \cup {s.k}
     /\ delegated' = TRUE
     /\ UNCHANGED << t, ops, userDone, swept, frozen, alarm, unexplained, ledger, used, signed, bcast,
-                    mined, loss, refusals >>
+                    done, mined, loss, refusals >>
 
 \* Delegated code lets the attacker drain without any further signature.
 Drain ==
     /\ delegated /\ ~swept /\ t <= H
     /\ swept' = TRUE /\ loss' = loss + Sweep /\ unexplained' = TRUE
-    /\ UNCHANGED << t, ops, userDone, frozen, alarm, ledger, used, signed, bcast, executed, mined,
+    /\ UNCHANGED << t, ops, userDone, frozen, alarm, ledger, used, signed, bcast, executed, done, mined,
                     delegated, refusals >>
 
 \* End of block. A broadcast transaction with the next nonce has been mined. The watcher (C4) reconciles the
@@ -199,7 +210,7 @@ Tick ==
           /\ executed' = IF contain THEN executed \cup {x.k : x \in {y \in signed : y.kind = "auth"}}
                                     ELSE executed
     /\ t' = t + 1 /\ ops' = 0 /\ userDone' = FALSE /\ swept' = FALSE /\ alarm' = FALSE /\ unexplained' = FALSE
-    /\ UNCHANGED << ledger, used, signed, bcast, mined, loss, refusals >>
+    /\ UNCHANGED << ledger, used, signed, bcast, done, mined, loss, refusals >>
 
 Next == UserWithdrawal \/ AttackerIntent \/ AttackerSign \/ AttackerSend \/ Execute \/ Delegate \/ Drain \/ Tick
 Spec == Init /\ [][Next]_vars
@@ -210,6 +221,7 @@ TypeOK ==
     /\ userDone \in BOOLEAN /\ swept \in BOOLEAN /\ frozen \in BOOLEAN /\ alarm \in BOOLEAN
     /\ unexplained \in BOOLEAN /\ delegated \in BOOLEAN /\ loss \in Nat /\ mined \in Nat
     /\ bcast \subseteq {s.k : s \in signed} /\ executed \subseteq {s.k : s \in signed}
+    /\ \A d \in done : d.k \in executed /\ d.b \in 0..t
 
 \* T1 Intent soundness: with intents on, every signature carries an intent the authority signed for exactly
 \* this destination and value, and no intent is used twice.
@@ -227,8 +239,8 @@ T2_NoDelegation == Semantic => (~delegated /\ \A s \in signed : s.kind = "tx")
 T3a_WindowBudget == Semantic => \A b \in 0..t : WindowAt(b) <= B
 T3b_Exposure == Semantic => loss <= B * ((t + T) \div T)
 T3c_Contained == (Semantic /\ Watcher /\ ~IACompromised) => loss <= B + Nu * Cap
-\* The earlier, stronger claim. Expected to FAIL: TLC should print a trace in which held signatures are spent
-\* together with a fresh window's budget (attacker A10).
+\* The earlier, stronger claim. Expected to FAIL without ChargeOutstanding: TLC should print a trace in which held
+\* signatures are spent together with a fresh window's budget (attacker A10). Expected to HOLD with it (R3h, R4h).
 T3c_ContainedWithoutHoarding == (Semantic /\ Watcher /\ ~IACompromised) => loss <= B
 
 \* T4 Containment latency: a block that raised an alarm, saw an unexplained outflow or a delegation ends frozen.

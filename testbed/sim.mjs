@@ -224,6 +224,26 @@ class Signer {
     this.safes = {}; // multisig wallet -> the co-signing key S holds for it (attacker A5)
   }
   deny(reason, who) { const k = `${who}:${reason}`; this.denials[k] = (this.denials[k] || 0) + 1; return { ok: false, reason }; }
+  // Budget accounting. By default a signature counts for T blocks from when it was signed. With chargeOutstanding
+  // (configurations R3h, R4h: the design fix for hoarding, bound T3) it also counts while it is unexecuted, and for
+  // T blocks after S sees it executed. S sees execution as the wallet's mined nonce passing the signed nonce, at its
+  // next request; seeing it late only makes the count more conservative.
+  counts(w, now) {
+    const T = this.cfg.windowBlocks;
+    if (w.block > now - T) return true;
+    if (!this.cfg.chargeOutstanding) return false;
+    return w.doneAt === null || w.doneAt > now - T;
+  }
+  async markExecuted(now) {
+    const mined = new Map();
+    for (const w of this.window) {
+      if (w.doneAt !== null) continue;
+      if (!mined.has(w.wallet)) mined.set(w.wallet, w.safe
+        ? Number(await pub.readContract({ address: w.wallet, abi: a5Art().COLDSAFE.abi, functionName: "nonce" }))
+        : await pub.getTransactionCount({ address: w.wallet, blockTag: "latest" }));
+      if (w.nonce < mined.get(w.wallet)) w.doneAt = now;
+    }
+  }
   decode(req) {
     if (!req.data || req.data === "0x") return { asset: "ETH", to: getAddress(req.to), amount: req.value };
     const tok = getAddress(req.to);
@@ -263,7 +283,8 @@ class Signer {
       const usd = usdOf(d.asset, d.amount);
       if (usd > C.perTxUsd) return this.deny("escalate-manual", who);
       const now = ctx.block;
-      this.window = this.window.filter(w => w.block > now - C.windowBlocks);
+      if (C.chargeOutstanding) await this.markExecuted(now);
+      this.window = this.window.filter(w => this.counts(w, now));
       const used = this.window.reduce((s, w) => s + w.usd, 0);
       if (used + usd > C.windowUsd) { this.onAlert?.("signer:velocity", who); return this.deny("velocity", who); }
       if (C.intents) {
@@ -277,7 +298,7 @@ class Signer {
         }
         this.used.add(i.id);
       }
-      this.window.push({ block: now, usd });
+      this.window.push({ block: now, usd, wallet: req.wallet, nonce: req.nonce, safe, doneAt: null });
     }
     if (safe) {
       const hash = await pub.readContract({ address: req.wallet, abi: a5Art().COLDSAFE.abi, functionName: "txHash", args: [req.to, req.value, req.data, req.operation, BigInt(req.nonce)] });
@@ -477,7 +498,7 @@ async function run({ name, cfg, attacker, seed = 7 }) {
   // (R0, R2) it keeps the same rate. Source: the hot wallet holding the most USDT.
   async function drip() {
     const B = cfg.windowUsd || 25_000_000, T = cfg.windowBlocks || 300, R = 2 * (cfg.perTxUsd || 1_000_000);
-    const used = signer.window.filter(w => w.block > tNow - T).reduce((s, w) => s + w.usd, 0);
+    const used = signer.window.filter(w => signer.counts(w, tNow)).reduce((s, w) => s + w.usd, 0);
     const usd = Math.floor(Math.min((B - R) / T, B - R - used));
     if (usd < 1_000) { atk.ops.pausedSteps++; return; }
     let w = null, most = -1n;
@@ -780,6 +801,9 @@ plan.push(["R4", "A10i"]);
 // Blind signing at a multisig (A5) and below-threshold drip (A8).
 for (const c of ["R0", "R1", "R2", "R3", "R4"]) for (const a of ["A5", "A8"]) plan.push([c, a]);
 plan.push(["R4", "A5i"], ["R4", "A8i"]);
+// Design fix for hoarding (bound T3): the budget also counts signatures that have not executed yet.
+for (const c of ["R3", "R4"]) CFG[c + "h"] = { ...CFG[c], label: CFG[c].label + " + budget counts unexecuted signatures", chargeOutstanding: true };
+plan.push(["R3h", "A3"], ["R3h", "A10"], ["R3h", null], ["R4h", "A4"], ["R4h", "A10i"], ["R4h", null]);
 if (only === "--list") {
   console.log(JSON.stringify({
     configs: Object.fromEntries(Object.entries(CFG).map(([k, v]) => [k, v.label])),

@@ -9,3 +9,6 @@ R1.cfg           pass
 Benign.cfg       pass
 R2.cfg           T5_NoLoss
 R3-hoarding.cfg  T3c_ContainedWithoutHoarding
+R3h.cfg          pass
+R4h.cfg          pass
+Benign-h.cfg     pass
