@@ -1,0 +1,13 @@
+# ./check.sh on didlab-research, 2026-11-13, commit cfc68f1 (model as of 7162d13). Pasted from the terminal;
+# per-configuration TLC logs were not copied off the VM.
+R4-A4.cfg          expected pass                           got pass                           7822448 distinct states  ok
+R4.cfg             expected pass                           got pass                           403 distinct states  ok
+R4t.cfg            expected pass                           got pass                           403 distinct states  ok
+R3.cfg             expected pass                           got pass                           1795505 distinct states  ok
+R1.cfg             expected pass                           got pass                           5131758 distinct states  ok
+Benign.cfg         expected pass                           got pass                           61 distinct states  ok
+R2.cfg             expected T5_NoLoss                      got T5_NoLoss                      1629 distinct states  ok
+R3-hoarding.cfg    expected T3c_ContainedWithoutHoarding   got T3c_ContainedWithoutHoarding   511008 distinct states  ok
+R3h.cfg            expected pass                           got pass                           215753 distinct states  ok
+R4h.cfg            expected pass                           got pass                           403 distinct states  ok
+Benign-h.cfg       expected pass                           got pass                           61 distinct states  ok
