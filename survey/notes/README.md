@@ -12,6 +12,7 @@ draft from these and check the page in the PDF before quoting.
 | [erinle2025sokwallets](erinle2025sokwallets.md) | Wallet SoK, Computer Networks 2025 | Survey positioning; C4 gap (1 of 29 defences is a response) |
 | [zhou2023sokdefi](zhou2023sokdefi.md) | DeFi attacks SoK, IEEE S&P 2023 | C4 motivation (rescue window vs pause speed) |
 | [wang2024mpfuzz](wang2024mpfuzz.md) | mpfuzz, USENIX Security 2024 | Limitation E8 vocabulary; sim-to-real |
+| [chen2026bts](chen2026bts.md) | Budgeted Threshold Signatures, ePrint 2026/2176 | C3 related work; hoarding gap (counts signed, not executed) |
 
 ## Where the PDFs are
 

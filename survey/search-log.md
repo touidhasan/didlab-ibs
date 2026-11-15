@@ -48,3 +48,5 @@
 | 2026-10-31 | WebSearch | Provisions privacy-preserving proofs of solvency CCS 2015 | dagher2015provisions (DBLP) |
 | 2026-10-31 | WebSearch | Chainalysis 2026 crypto crime mid-year update stolen funds DPRK | secondary only; pending |
 | 2026-10-31 | WebSearch | safe-tx-hashes-util pcaversaccio | pcaversaccio2025safehashes |
+| 2026-11-15 | WebSearch | rolling spending limit policy engines (Fireblocks, Dfns, Turnkey, CubeSigner, Privy); pre-signed transactions withheld velocity limit; patent velocity limit pending signed | chen2026bts, privy2026stateful; see docs/PRIOR_ART_HOARDING_FIX.md |
+| 2026-11-15 | Read (user-supplied PDF) | ePrint 2026/2176 full text | chen2026bts (note) |
