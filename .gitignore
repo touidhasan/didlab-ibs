@@ -31,3 +31,6 @@ survey/papers/
 formal/.tools/
 formal/states/
 formal/*_TTrace_*.tla
+
+# Output of testbed/tools/rebuild.mjs
+build/

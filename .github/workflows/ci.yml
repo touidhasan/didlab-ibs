@@ -67,6 +67,8 @@ jobs:
             const [o, h] = ["R3_n8-A10", "R3h_n8-A10"].map(s => require(`/tmp/${s}.json`).results[0]);
             console.log(o.lossUsd, h.lossUsd);
             if (!(o.lossUsd > 25000000) || !(h.lossUsd <= 25000000)) process.exit(1)'
+      - name: Rebuild tables and figures from committed results; check the claims
+        run: node testbed/tools/rebuild.mjs
       - name: Install research-net smoke test
         working-directory: research-net
         run: npm ci

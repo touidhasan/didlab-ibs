@@ -40,6 +40,18 @@ The research network is **never** connected to the DIDLab production chain (2525
 cd dashboard && node server.mjs     # http://127.0.0.1:8090 (see dashboard/README.md for remote access)
 ```
 
+## Tables, figures and checks
+
+```
+node testbed/tools/rebuild.mjs
+```
+
+This rebuilds every results table and figure from the committed campaign exports in `testbed/results/`. Output
+goes to `build/`, which git ignores. It also checks the claims the results support: the T3 bounds in every
+Hardhat run, no false alarm in any benign run, Besu equal to Hardhat wherever a signing policy is on, and the
+hoarding fix. It exits 1 if any check fails, and CI runs it on every push. It needs only Node, and it does not
+rerun the simulator.
+
 ## Repository rules
 
 - **Nothing generated is committed:** validator keys, `networkFiles/`, generated genesis, `.env`,
