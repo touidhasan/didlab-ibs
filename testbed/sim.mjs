@@ -804,6 +804,17 @@ plan.push(["R4", "A5i"], ["R4", "A8i"]);
 // Design fix for hoarding (bound T3): the budget also counts signatures that have not executed yet.
 for (const c of ["R3", "R4"]) CFG[c + "h"] = { ...CFG[c], label: CFG[c].label + " + budget counts unexecuted signatures", chargeOutstanding: true };
 plan.push(["R3h", "A3"], ["R3h", "A10"], ["R3h", null], ["R4h", "A4"], ["R4h", "A10i"], ["R4h", null]);
+// Parameter sweeps (CP4): one parameter at a time around the defaults B = USD 25M, T = 300, nu = 4, b = USD 1M.
+// Config names use "_" because tools split run names at "-".
+const SWEEP = { B10: ["windowUsd", 10_000_000, "B = USD 10M"], B50: ["windowUsd", 50_000_000, "B = USD 50M"],
+  T150: ["windowBlocks", 150, "T = 150"], T600: ["windowBlocks", 600, "T = 600"],
+  n2: ["nonceWindow", 2, "nu = 2"], n8: ["nonceWindow", 8, "nu = 8"],
+  b05: ["perTxUsd", 500_000, "b = USD 0.5M"], b2: ["perTxUsd", 2_000_000, "b = USD 2M"] };
+const SWEEP_CELLS = [["R1", "A3"], ["R1", "A8"], ["R3", "A3"], ["R3", "A10"], ["R3h", "A10"], ["R4", "A4"], ["R4", null]];
+for (const [tag, [key, val, text]] of Object.entries(SWEEP)) for (const base of ["R1", "R3", "R3h", "R4"]) {
+  CFG[`${base}_${tag}`] = { ...CFG[base], [key]: val, label: `${CFG[base].label} (${text})` };
+}
+for (const tag of Object.keys(SWEEP)) for (const [base, a] of SWEEP_CELLS) plan.push([`${base}_${tag}`, a]);
 if (only === "--list") {
   console.log(JSON.stringify({
     configs: Object.fromEntries(Object.entries(CFG).map(([k, v]) => [k, v.label])),

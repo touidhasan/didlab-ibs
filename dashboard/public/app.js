@@ -62,6 +62,7 @@ async function refreshStatus() {
 // ---------- campaigns ----------
 const CORE = ["R0", "R1", "R2", "R3", "R4"].flatMap(c => ["A1", "A2", "A3"].map(a => `${c}-${a}`));
 const MEMPOOL = ["R0", "R1", "R2", "R3", "R4"].flatMap(c => ["A3r", "A9"].map(a => `${c}-${a}`)); // mempool-aware attackers
+const SWEEP = ["B10", "B50", "T150", "T600", "n2", "n8", "b05", "b2"].flatMap(t => ["R1_" + t + "-A3", "R1_" + t + "-A8", "R3_" + t + "-A3", "R3_" + t + "-A10", "R3h_" + t + "-A10", "R4_" + t + "-A4", "R4_" + t + "-benign"]); // parameter sweeps
 const HFIX = ["R3h-A3", "R3h-A10", "R3h-benign", "R4h-A4", "R4h-A10i", "R4h-benign"]; // hoarding fix
 const CP3 = [...["R0", "R1", "R2", "R3", "R4"].flatMap(c => ["A5", "A8"].map(a => `${c}-${a}`)), "R4-A5i", "R4-A8i"]; // blind signing, drip
 function buildPicker() {
@@ -74,7 +75,7 @@ function describe(id) {
   return `${state.catalog.configs[c] || c}\n${a === "benign" ? "No attacker (benign traffic only)" : state.catalog.attackers[a] || a}`;
 }
 for (const b of document.querySelectorAll("[data-sel]")) b.addEventListener("click", () => {
-  const pick = { core: CORE, mempool: MEMPOOL, cp3: CP3, hfix: HFIX }[b.dataset.sel];
+  const pick = { core: CORE, mempool: MEMPOOL, cp3: CP3, hfix: HFIX, sweep: SWEEP }[b.dataset.sel];
   for (const cb of document.querySelectorAll("#run-picker input")) cb.checked = b.dataset.sel === "all" || !!pick?.includes(cb.value);
   estimate();
 });

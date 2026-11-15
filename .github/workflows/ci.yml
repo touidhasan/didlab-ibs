@@ -59,6 +59,14 @@ jobs:
             const [o, h] = ["R3-A10", "R3h-A10"].map(s => require(`/tmp/${s}.json`).results[0]);
             console.log(o.attackerVectors, h.attackerVectors);
             if (!(h.lossUsd < o.lossUsd) || h.attackerVectors.hoard !== 4000000) process.exit(1)'
+      - name: With nu = 8 the hoarder exceeds B; the fix keeps it within B
+        working-directory: testbed
+        run: |
+          for s in R3_n8-A10 R3h_n8-A10; do HORIZON=320 OUT=/tmp/$s.json node sim.mjs =$s; done
+          node -e '
+            const [o, h] = ["R3_n8-A10", "R3h_n8-A10"].map(s => require(`/tmp/${s}.json`).results[0]);
+            console.log(o.lossUsd, h.lossUsd);
+            if (!(o.lossUsd > 25000000) || !(h.lossUsd <= 25000000)) process.exit(1)'
       - name: Install research-net smoke test
         working-directory: research-net
         run: npm ci
