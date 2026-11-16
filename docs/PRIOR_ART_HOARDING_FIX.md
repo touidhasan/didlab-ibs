@@ -31,15 +31,20 @@
 | **Patents: the nonce window is not ours.** DLT Global (now Knnx; US 11,095,431 B2, priority 2019-12-13) defines a "nonce window" that limits how many transactions per identity may be pending broadcast at a node. It has no value limits. | `dltglobal2021txmanager` | Our ν applies the same idea at the signer. Cite it where ν is introduced. |
 | **Patents: limits at the signer are broadly patented.** Daily and weekly limits in an enclave hot wallet (WO 2021/061415 A1); a custody policy engine with value thresholds (EP 4341834 A1); and an HSM that checks a quorum, signs and submits the withdrawal itself (Anchorage, US 2019/0266576 A1, US 11,494,763 B2). | patent search below | C2 and C3 are not ours. Designs where the HSM signs *and* submits keep signed bytes inside, so orchestration cannot hoard them. Our threat model is the other architecture. |
 | **Payments: time-window velocity rules over authorizations**, for example amounts over 24 or 48 hours (WO 2011/008953 A2), and aggregation limits (US 8,584,936 B2). | patent search below | Supports the authorization-hold analogy. |
+| **Counting initiated-but-uncleared transfers against a limit is old.** The PayPal founders' 1999-priority family (Levchin, Nosek, Thiel, Banister; for example US 2014/0250003 A1, now abandoned) reduces a user's transferable amount by transfers that have been requested or initiated but not yet cleared. A limit may also cap the size or number of uncleared transactions, and client transactions not synchronised within a set period (thirty days in the example) may be cancelled. | `levchin2014limit` | **This is our counting principle, applied to offline payment certificates 25 years ago.** Together with the authorization hold, it settles it: counting until execution is not ours. What remains ours: (1) showing that signer-side budgets in custody count at signing, as Privy documents and ePrint 2026/2176 defines; (2) the size of the leak, B + Wνb; (3) detecting execution from the wallet's mined nonce, with no help from the broadcaster; and (4) the TLC check and the measurements. |
 
 ## Still to do (before the claim appears in a paper)
 
 1. ~~Read ePrint 2026/2176 in full.~~ Done 2026-11-15: it counts at signing and does not discuss held
    signatures (above).
-2. **Patent search: first pass done 2026-11-15** (log below). It found GK8's broadcast-cap example and DLT
-   Global's nonce window. Not yet done: a classification search (CPC G06Q20/40, G06Q20/36, H04L9/32, G06Q20/065)
-   and USPTO full text (PPUBS). This is a novelty check for the paper, not a legal clearance. The UMKC library or
-   technology-transfer office can run a professional search if the claim ever matters beyond the paper.
+2. **Patent search: done 2026-11-15** (log below), including a classification pass. GK8's application is
+   classified G06Q20/3678 and G06Q20/405. Searches combining those codes, G06Q20/4016 and H04L9/3247 with our terms
+   found the PayPal family and the transaction-validity-period patents.
+   - **Limits of the search:** web search does not filter by classification code the way Google Patents' own
+     interface or USPTO PPUBS does, so this is not exhaustive.
+   - This is a novelty check for the paper, not a legal clearance. The UMKC library or technology-transfer office
+     can run a professional search if the claim ever matters beyond the paper.
+   - **Still unread:** the Fireblocks family (below).
 3. **Vendor counting rules.** Ask or test, on a testnet only, whether Fireblocks, Dfns, Ripple or Cobo count
    signed but unbroadcast raw-signing requests, and for how long. Report only what their documentation states or
    what we measure.
@@ -65,6 +70,26 @@ Google Patents itself.
 | hot wallet exposure limit outstanding unconfirmed withdrawals counted until confirmation | WO 2021/061415 A1 (daily and weekly limits); none on counting until confirmation |
 | pre-signed transaction risk policy engine limit not yet submitted cancel nonce replace custody | none relevant |
 
-Not opened, to read before final novelty wording: Fireblocks WO 2020/046786 A1 ("System and method for securing
-crypto-asset transactions"), and the full claims of GK8 US 2021/0049591 A1 (only the description was read).
+### Classification pass (2026-11-15)
+
+| Query (CPC codes as search terms) | Relevant results |
+|---|---|
+| G06Q20/4016 cryptocurrency withdrawal limit time window signed transaction | EP 4519817 A4 (time-limited cryptocurrency transactions, priority 2022); US 2017/0103390 A1 (pre-signed redeem transactions valid after +24 h) |
+| G06Q20/3678 G06Q20/405 transaction rules spending limit digital wallet signing blockchain period | **PayPal family, US 2014/0250003 A1** (uncleared transfers reduce the transferable amount); TW I694390 B (blockchain transaction validity period, priority 2018); GK8 again |
+| H04L9/3247 H04L9/50 signing policy amount threshold period multi-party computation custody | US 2022/0116214 A1 (on-chain multisig daily limit); US 2023/0421396 A1 (two-tier MPC signing policy); nothing on counting |
+| US20210224797A1 / US11900366B2 Fireblocks securing crypto-asset transactions | family identified only |
+
+### GK8 claims (read 2026-11-15)
+
+**None of the 48 claims recites a limit, cap, daily sum or counting of broadcast transactions.** Claims 20 and 21
+recite creating and signing a rule or a multi-signature policy and sending it to co-signers. The daily-sum example
+appears only in the description. Claims 37–48 concern account creation with a time slot.
+
+### Fireblocks family: identified, not read
+
+The family: WO 2020/046786 A1; US 2021/0224797 A1; US 11,900,366 B2 (granted 2024-02-13); and US 12,481,988 B2
+(granted 2025-11-25). Priority is 2018-08-27. The pages could not be opened from this session: the request needed
+approval, and nobody answered. **To do: read the granted claims of US 11,900,366 B2 and US 12,481,988 B2** for any
+time-window limit counted at broadcast or execution. Fireblocks' public documentation describes TIMEFRAME limits that
+accumulate matching transactions over a period, but does not say when an amount counts.
 

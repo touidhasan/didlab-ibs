@@ -52,3 +52,6 @@
 | 2026-11-15 | Read (user-supplied PDF) | ePrint 2026/2176 full text | chen2026bts (note) |
 | 2026-11-15 | WebSearch (patents.google.com) | 9 queries, see docs/PRIOR_ART_HOARDING_FIX.md "Patent search log" | gk8_2021wallet, dltglobal2021txmanager |
 | 2026-11-15 | WebFetch | patents.google.com US20210049591A1, US11095431B2 | descriptions read; GK8 claims not read |
+| 2026-11-15 | WebSearch (patents.google.com) | CPC-term pass: G06Q20/4016, G06Q20/3678, G06Q20/405, H04L9/3247 with our terms; Fireblocks family | levchin2014limit; Fireblocks family identified |
+| 2026-11-15 | WebFetch | US20210049591A1 claims 1-48 | no claim recites a cap |
+| 2026-11-15 | WebFetch (denied, no approval) | patents.google.com WO2020046786A1 | not read |
