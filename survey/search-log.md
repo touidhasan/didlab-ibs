@@ -50,3 +50,5 @@
 | 2026-10-31 | WebSearch | safe-tx-hashes-util pcaversaccio | pcaversaccio2025safehashes |
 | 2026-11-15 | WebSearch | rolling spending limit policy engines (Fireblocks, Dfns, Turnkey, CubeSigner, Privy); pre-signed transactions withheld velocity limit; patent velocity limit pending signed | chen2026bts, privy2026stateful; see docs/PRIOR_ART_HOARDING_FIX.md |
 | 2026-11-15 | Read (user-supplied PDF) | ePrint 2026/2176 full text | chen2026bts (note) |
+| 2026-11-15 | WebSearch (patents.google.com) | 9 queries, see docs/PRIOR_ART_HOARDING_FIX.md "Patent search log" | gk8_2021wallet, dltglobal2021txmanager |
+| 2026-11-15 | WebFetch | patents.google.com US20210049591A1, US11095431B2 | descriptions read; GK8 claims not read |
