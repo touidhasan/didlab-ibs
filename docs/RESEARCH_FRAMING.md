@@ -19,7 +19,7 @@ and on a real Ethereum client, and test it against every incident of $10M or mor
 | # | Challenge | Evidence |
 |---|---|---|
 | CH1 | **Valid signatures, wrong intent.** The dominant large-loss pattern is a legitimate signer signing an attacker's request: orchestration compromise, UI or payload tampering, blind signing. | 12 verified catalog incidents, $9.93B: Binance 2026 ($6.36B), Bybit ($1.46B), Bitget ($387.5M), DMM ($305M), Drift ($285M), WazirX ($234.9M) and others (`catalog/incidents.csv`). In 8 of 12 the authorization type is signing-request manipulation, blind signing or account takeover; the other 4 are key theft or validator-key compromise. |
-| CH2 | **Every layer trusts the one before it.** MPC protects the key, clear signing protects the display, contract policy protects execution; none checks *why* a request exists. | Gap analysis O1 (`survey/gap-analysis.md`); the NCC Group Bybit analysis reports that the Safe gateway did not check proposal–signature consistency until after the attack (`nccgroup2025bybit`). |
+| CH2 | **Every layer trusts the one before it.** MPC protects the key, clear signing protects the display, contract policy protects execution. Custody vendors offer a callback hook where a customer's own service can check *why* a request exists, but what it checks is left to each customer and is neither specified nor evaluated in public. *(Revised 2026-11-15: the earlier wording, "none checks why a request exists", is wrong for these hooks.)* | Gap analysis O1, O2 (`survey/gap-analysis.md`); `fireblocks2026cosignercallback`, `bitgo2026policies`, `cobo2026triplea`; the NCC Group Bybit analysis reports that the Safe gateway did not check proposal–signature consistency until after the attack (`nccgroup2025bybit`). |
 | CH3 | **Humans are the last check, and they fail.** | A 10-person study: most participants caught some, but not all, address substitutions (`almutairi2019keepkey`). Look-alike addresses defeat partial checking (`ivanov2021ethclipper`). Bybit signers approved what a tampered UI showed. |
 | CH4 | **New signable objects grant lasting control.** An EIP-7702 authorization hands over the account with one signature. | Over 63% of 3.66M authorizations are linked to malicious EOA-targeted attacks (`huang2026darkside`); 10 machine-checked attack patterns (`qian2026delegproof`). |
 | CH5 | **Attacks are faster than people.** | 56% of DeFi attacks were not atomic, leaving a response window. Yet of the 87 victims with a pause mechanism, 51 used it within 48 h and only one within an hour (`zhou2023sokdefi`). One-block drains leave no window at all (our R2-A2: contained in 2.05 s, $2.21B lost). |
@@ -34,7 +34,9 @@ and on a real Ethereum client, and test it against every incident of $10M or mor
 | Key protection | HSM, MPC/threshold ECDSA (`aumasson2020tecdsa`) | No single party holds the key | Signs any request the orchestration sends; MPC implementations have their own key-extraction flaws (`makriyannis2023mpcattacks`, `verichains2023tsshock`) |
 | Multisig + clear signing | Safe, ERC-7730 (`erc7730`) | Signers see readable data | A human compares the display with their belief; ERC-7730 itself lists front-end compromise and registry poisoning |
 | Out-of-band hash check | safe-tx-hashes (`pcaversaccio2025safehashes`) | Signed hash equals recomputed hash | Independent only if the signer re-enters the intended transaction by hand |
-| Pre-sign simulation or attestation | Blockaid VTX (`blockaid2024vtx`), wallet simulation | Predicted outcome looks safe | A risk model, not an intent; simulation can be gamed (`wang2026simphishing`) |
+| Pre-sign simulation or attestation | Blockaid VTX (`blockaid2024vtx`), wallet simulation | Predicted outcome looks safe | A risk model, not an intent; simulation can be gamed (`wang2026simphishing`, `zengo2023redpill`) |
+| Signing-path callbacks | Fireblocks API Co-signer Callback Handler (`fireblocks2026cosignercallback`), BitGo webhook policy (`bitgo2026policies`), Cobo callbacks (`cobo2026triplea`) | A customer-run service approves each signing request, by machine, before the custodian's signer acts | Optional. The check is whatever the customer writes; no public specification of what to compare against, no public evaluation, no stated composition with budgets or containment. Worthless if the callback shares credentials with the systems it checks (Cobo's own caveat) |
+| Agent payment mandates | AP2 v0.2 (`ap2v02`) | Agent payments must fall within user-signed constraints, checked by machine before payment credentials are released | Commerce, not a custodian's own outbound transfers; no containment |
 | On-chain policy | Zodiac Roles (`gnosisguild2024roles`), ERC-7579 hooks, wallet limits | Only allowlisted calls execute | Policy updates are themselves signed requests (the Bybit path) |
 | Cryptographic policy | Policy-based / policy-compliant signatures (`bellare2014pbs`, `badertscher2021pcs`) | Key can only sign policy-compliant messages | Static policy, non-standard verification; no per-operation intent |
 | Rate limits and vaults | ERC-7265 (`erc7265`), covenant vaults (`moeser2016covenants`) | Bounded or delayed outflow | Protocol-side or Bitcoin-only; no intent |
@@ -43,8 +45,11 @@ and on a real Ethereum client, and test it against every incident of $10M or mor
 | Regulation | PSD2 dynamic linking (`eu2018rtssca`), CCSS (`ccss2024v9`) | Authorization tied to amount and payee; audited procedures | Reference is what the payer saw; process, not machine-enforced |
 
 **What is genuinely close, so we must be precise.** Report-then-execute, PSD2 dynamic linking and
-attestation services each contain one piece of IBS. Our claim is not any single piece. It is this
-combination, with stated proofs, real-client evidence and incident-level evaluation:
+attestation services each contain one piece of IBS. **Items 1 and 2 below together are already deployed
+as vendor callback hooks** (round 2, 2026-11-15), so we do not claim them, alone or together. Our claim is
+the combination of all five, with what the hooks leave open specified (what the check compares against,
+how intents are authenticated, what is decoded), and with stated proofs, real-client evidence and
+incident-level evaluation:
 
 1. The intent comes from a separate trust domain.
 2. It is checked by machine at the custodian's signer, before signing.
@@ -52,8 +57,9 @@ combination, with stated proofs, real-client evidence and incident-level evaluat
 4. Exposure budgets bound the cost when a component fails.
 5. Autonomous containment acts on whatever still leaves the wallet unexplained.
 
-Industry policy engines are a likely reviewer objection ("this is a policy engine"). We still need
-verified vendor documentation to state what they can and cannot express; this is pending.
+Industry policy engines are a likely reviewer objection ("this is a policy engine"). Vendor documentation
+read on 2026-11-15 shows callback hooks (above) and velocity limits whose counting rule is not stated
+(gap analysis O6). What each engine can express beyond that is still to be checked per vendor.
 
 ## 3. Scope
 
@@ -306,7 +312,7 @@ in every A8 cell.
 
 | Risk | Response |
 |---|---|
-| Novelty challenged by report-then-execute, PSD2 or policy engines | State the five-part combination exactly (§2). Credit each source. Show what each lacks with a concrete incident (e.g. Bybit passes a policy engine whose own update path is compromised). |
+| Novelty challenged by report-then-execute, PSD2, policy engines or vendor callback hooks | State the five-part combination exactly (§2). Credit each source. Show what each lacks with a concrete incident (e.g. Bybit passes a policy engine whose own update path is compromised). |
 | The intent authority becomes the new target | T3 bounds it: at most $B$ per window while the attacker stays under budget, and $\le B + W\nu b$ once a budget breach contains it (observed USD 24.0M at $B$ = USD 25M). A-ia requires user-device authentication and separate infrastructure; we report what happens when that fails (A4). |
 | Internal transfers have no user intent | Model quorum-issued operational intents; evaluate sweeps and replenishment under A4-style compromise. |
 | Budgets block real business | Parameter frontier from real traffic (§8 item 3); T7 shows C1 prevents attacker-driven exhaustion. |
