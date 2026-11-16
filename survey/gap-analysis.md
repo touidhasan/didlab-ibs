@@ -114,6 +114,10 @@ loss. No surveyed defense reports results on two backends. Our Hardhat vs Besu d
 Besu queued underfunded withdrawals and released them later) is therefore a methodological point in its
 own right; wang2024mpfuzz and li2021deter are the closest prior work.
 
+**O5. EIP-7702 adds a request type that existing controls do not model.** huang2026darkside and
+qi2025eip7702phishing measure consumer abuse at scale; qian2026delegproof gives a machine-checked model.
+None addresses a custodian whose orchestration asks its signer for a delegation (our attacker A3).
+
 **O6. Budget counting rules are rarely stated, and where stated they differ.** Round 2 checked when an amount
 counts against a limit:
 
@@ -130,10 +134,6 @@ Counting at execution (on-chain) cannot be hoarded around but acts only at execu
 over a *rolling* window leaks when signatures stay valid after their window passes (our A10). AP2 avoids
 this by a lifetime budget and one outstanding approval at a time; Ethereum has no transaction expiry
 (eip5081 is stagnant). See `docs/PRIOR_ART_HOARDING_FIX.md`.
-
-**O5. EIP-7702 adds a request type that existing controls do not model.** huang2026darkside and
-qi2025eip7702phishing measure consumer abuse at scale; qian2026delegproof gives a machine-checked model.
-None addresses a custodian whose orchestration asks its signer for a delegation (our attacker A3).
 
 ## 3. Mapping to IBS controls
 
@@ -164,7 +164,7 @@ None addresses a custodian whose orchestration asks its signer for a delegation 
 - **Vendor documentation.** Round 2 shows that the most relevant prior art for C1 and C3 is in vendor
   documentation, not papers. Documentation states features, not how they behave under attack, and changes
   without notice; every vendor claim is dated and marked grey.
-- **Recency.** Items run to October 2026; preprints may have newer versions or venues.
+- **Recency.** Items run to November 2026; preprints may have newer versions or venues.
 - **Grey literature.** Vendor figures (e.g. Forta's recall) are claims, not results; they are marked grey and
   never used as evidence of effectiveness.
 - **Extraction.** One author with AI assistance filled the matrix. A second, independent pass is needed
