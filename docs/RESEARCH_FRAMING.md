@@ -1,4 +1,4 @@
-# Intent-Bound Signing: research framing (v1, 2026-11-03)
+# Intent-Bound Signing: research framing (v1, 2026-11-03; revised 2026-11-15 and 2026-11-18)
 
 One document that states what problem we solve, what exists, what we claim, how we will prove it, how we
 test it, and what data and real-world work back it. Papers, the proposal and the dashboard all refer
@@ -25,7 +25,7 @@ and on a real Ethereum client, and test it against every incident of $10M or mor
 | CH5 | **Attacks are faster than people.** | 56% of DeFi attacks were not atomic, leaving a response window. Yet of the 87 victims with a pause mechanism, 51 used it within 48 h and only one within an hour (`zhou2023sokdefi`). One-block drains leave no window at all (our R2-A2: contained in 2.05 s, $2.21B lost). |
 | CH6 | **Defences stop at the signature.** | Of 29 wallet defence methods, 7 are remedial and only 1 is a response method (`erinle2025sokwallets`). Monitoring tools target protocols (`meng2026houston`, `forta2024firewall`) and drop the plain transfers custodial drains consist of. |
 | CH7 | **Controls must not break withdrawals.** Hot wallets serve thousands of withdrawals; a control that blocks them is not deployable. | Budgets alone let an attacker exhaust them: R1 blocks 458 of 727 legitimate withdrawals under attack (`testbed/results/2026-10-30/`). |
-| CH8 | **There is no public testbed or reliable dataset.** | No public custodial-pipeline testbed exists. Simulator and client disagree on mempool semantics (E8). Aggregator labels contradict primary sources for Binance 2026, Bitget 2026 and Binance 2019 (`catalog/`). |
+| CH8 | **There is no public testbed or reliable dataset.** | No public custodial-pipeline testbed exists. Simulator and client disagree on mempool semantics (E8). Aggregator labels contradict primary sources for Binance 2026, Bitget 2026, Binance 2019, Wintermute, Vulcan Forged and Mixin (`catalog/`; §8 item 2). |
 
 ## 2. Current solutions and where they stop
 
