@@ -8,3 +8,7 @@ name,date,reason
 "Curio",2024-03-25,"S2: governance contract bug (dataset: Delegatecall Hijack)"
 "Cork V1",2025-05-28,"S2: contract bug (dataset: Improper Access Control) in a DeFi protocol"
 "Nesa",2026-08-24,"S2: contract arithmetic error (dataset: Token & Share Accounting / Arithmetic Error)"
+"Badger DAO",2021-12-02,"Outside universe: users signed unlimited token approvals in their own self-custody wallets after a compromised Cloudflare API key let the attacker inject a script into Badger's front end (Halborn; The Register; Revoke.cash); no custodian, bridge or privileged signer. Consumer-side request manipulation, related to planned attacker A7; kept for the discussion of wallet-side intent checks"
+"Atomic Wallet",2023-06-03,"Outside universe: non-custodial wallet whose users held their own keys; over $100M taken from about 5,500 wallets, root cause not disclosed (Elliptic via Cointelegraph; Decrypt)"
+"Bitget",2025-04-20,"Outside universe: abnormal VOXEL/USDT futures trading (market manipulation or a market-maker bot fault, disputed); trades rolled back; no keys or signing path involved (Cointelegraph; The Block)"
+"COLDCARD",2026-07-31,"Outside universe: self-custody hardware wallets. An RNG integration error in seed generation (firmware since March 2021) let attackers derive users' keys; confirmed thefts about $88.6M-$103M (BleepingComputer; Cointelegraph; Galaxy Research). Noted with LuBian and Wintermute as evidence that key generation is a separate failure class"

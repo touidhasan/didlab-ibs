@@ -49,7 +49,7 @@ are **outside the universe** (scope S2 in `../docs/SCOPE_AND_LIMITATIONS.md`) an
 | `loss_usd` | Best-supported figure; `loss_usd_range` if sources differ |
 | `chains` | Chains affected |
 | `access` | How the attacker got in (e.g. phishing, supply chain, insider, malware, unknown) |
-| `authorization` | **How the theft was authorized**: `key-theft`, `account-takeover` (users' API keys/2FA abused so the exchange's own system signs withdrawals), `signing-request-manipulation` (orchestration compromised, real signer signs), `blind-signing` (signers shown false transaction details), `validator-key-compromise`, `contract-bug`, `insider`, `unknown` |
+| `authorization` | **How the theft was authorized**: `key-theft`, `account-takeover` (users' or employees' credentials, such as API keys, 2FA or phone numbers, abused so the exchange's own system signs withdrawals; employee accounts added 2026-11-18 for FTX), `signing-request-manipulation` (orchestration compromised, real signer signs), `blind-signing` (signers shown false transaction details), `validator-key-compromise`, `contract-bug`, `insider`, `unknown` |
 | `detection` | Who detected it and how long after the first theft |
 | `response` | Pauses, freezes, recoveries |
 | `ibs_status` | `evaluated` / `out-of-scope` / `insufficient-evidence` / `disputed` |

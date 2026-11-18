@@ -18,7 +18,7 @@ and on a real Ethereum client, and test it against every incident of $10M or mor
 
 | # | Challenge | Evidence |
 |---|---|---|
-| CH1 | **Valid signatures, wrong intent.** The dominant large-loss pattern is a legitimate signer signing an attacker's request: orchestration compromise, UI or payload tampering, blind signing. | 12 verified catalog incidents, $9.93B: Binance 2026 ($6.36B), Bybit ($1.46B), Bitget ($387.5M), DMM ($305M), Drift ($285M), WazirX ($234.9M) and others (`catalog/incidents.csv`). In 8 of 12 the authorization type is signing-request manipulation, blind signing or account takeover; the other 4 are key theft or validator-key compromise. |
+| CH1 | **Valid signatures, wrong intent.** Since 2024 the dominant large-loss pattern is a legitimate signer signing an attacker's request: orchestration compromise, UI or payload tampering, blind signing. Before 2024, raw key theft was more common. *(Narrowed 2026-11-18, after verification of every candidate of $100M or more: the earlier wording had no time bound.)* | Catalog, complete for incidents of $100M or more (`catalog/incidents.csv`), 20 evaluated: over 2011-2026, key theft or validator-key compromise leads by count (12 of 20, $3.26B), and valid-signature cases (signing-request manipulation, blind signing, account takeover) lead by loss (8 of 20, $9.73B). Binance 2026 alone is $6.36B; without it the loss is about even. Since 2024, 7 of 8 are valid-signature cases ($9.33B): Binance 2026, Bybit ($1.46B), Bitget ($387.5M), DMM ($305M), Kelp ($292M), Drift ($285M), WazirX ($234.9M); the eighth is PlayDapp (key theft, $290M nominal, about $32M realized). Not counted: 3 disputed (LuBian $3.5B, Multichain, BitGrail), 1 with insufficient evidence (Gate.io), 5 out-of-scope contract bugs (S2). |
 | CH2 | **Every layer trusts the one before it.** MPC protects the key, clear signing protects the display, contract policy protects execution. Custody vendors offer a callback hook where a customer's own service can check *why* a request exists, but what it checks is left to each customer and is neither specified nor evaluated in public. *(Revised 2026-11-15: the earlier wording, "none checks why a request exists", is wrong for these hooks.)* | Gap analysis O1, O2 (`survey/gap-analysis.md`); `fireblocks2026cosignercallback`, `bitgo2026policies`, `cobo2026triplea`; the NCC Group Bybit analysis reports that the Safe gateway did not check proposal–signature consistency until after the attack (`nccgroup2025bybit`). |
 | CH3 | **Humans are the last check, and they fail.** | A 10-person study: most participants caught some, but not all, address substitutions (`almutairi2019keepkey`). Look-alike addresses defeat partial checking (`ivanov2021ethclipper`). Bybit signers approved what a tampered UI showed. |
 | CH4 | **New signable objects grant lasting control.** An EIP-7702 authorization hands over the account with one signature. | Over 63% of 3.66M authorizations are linked to malicious EOA-targeted attacks (`huang2026darkside`); 10 machine-checked attack patterns (`qian2026delegproof`). |
@@ -256,14 +256,22 @@ in every A8 cell.
 
 1. **Incident catalog** (`catalog/`).
    - **Scope:** every in-scope incident of $10M or more since 2014. 130 candidates from the
-     DeFiLlama snapshot of 2026-10-31: 12 verified, 9 excluded with reasons, 109 pending.
+     DeFiLlama snapshot of 2026-10-31: 33 verified (24 evaluated, 5 out of scope, 3 disputed, 1 insufficient
+     evidence), 13 excluded with reasons, 84 pending. Every candidate of $100M or more is resolved (2026-11-18);
+     the 84 pending are all below $100M.
+   - **Model coverage (2026-11-18):** Kelp 2026 fits the intent-authority class (A4) only because the
+     signer's read path to the source chain was poisoned. The threat model must state that the intent
+     authority reads its evidence through a path independent of the signer's infrastructure.
    - **Coding per incident:** universe, access path, authorization type, detection, response; which IBS
      controls apply; and a predicted outcome (prevented / bounded to ≤ $B$ / detected but not prevented
      / out of scope), with a reason.
    - **Second sources:** the `erinle2025sokwallets` dataset and `olushola2025exchangecrimes`.
    - **Output:** coverage tables for RQ5.
 2. **Aggregator reliability.** Disagreement between aggregator labels and primary sources is itself a
-   finding: three disagreements found so far (Binance 2026, Bitget 2026, Binance 2019).
+   finding. Label disagreements found so far: Binance 2026, Bitget 2026, Binance 2019, Wintermute (labelled
+   phishing; the sources show a weak generated key), Vulcan Forged and Mixin (labelled a DeFi protocol and
+   "Other"; both held users' keys or assets). Dates also differ by one to four days for KuCoin, FTX and
+   Multichain, and the dataset dates Mt. Gox by its 2014 collapse, not the 2011 start of the theft.
 3. **Real hot-wallet traffic (planned).** Use public on-chain data from labelled exchange hot wallets to:
    - fit withdrawal size and arrival distributions, replacing the synthetic traffic (E4);
    - replay that traffic through the budget rules, to measure how often a given $(B, T, b)$ would have
@@ -326,7 +334,8 @@ in every A8 cell.
 2. Read the probe result; decide on the upstream report.
 3. Add attackers A3r and A9, then A5 and A8; run them on both backends. A3r and A9 done (2026-11-07): the fixed A3r closes the R0-A3 Besu gap to 0.012%, and A9's queue on Besu mostly starves customers. A10 (hoarding) revised T3 and was recorded on 2026-11-09. A5 and A8 built on 2026-11-09 and recorded on both backends on 2026-11-10: 11 of 12 cells equal across backends, and the one exception (R3-A5) was predicted in advance.
 4. Write the TLA+ model for T2, T3 and T6; draft the T1 reduction.
-5. Verify the ≥$100M pending catalog candidates first; code all incidents for RQ5.
+5. Verify the ≥$100M pending catalog candidates first; code all incidents for RQ5. The ≥$100M candidates
+   were done on 2026-11-18 (21 incident files, 4 exclusions); the 84 below $100M remain.
    (CP4's Besu matrix is done early: core 15 at seeds 7–11 on 2026-11-13. R1, R3, R4 and R2-A1 equal Hardhat at
    every seed; R0 and R2-A2/A3 are reported as ranges.)
 6. Public hot-wallet traffic: data pull, distribution fit, budget false-positive analysis.
